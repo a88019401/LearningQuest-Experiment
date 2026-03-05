@@ -95,7 +95,7 @@ function computeLevelStars(score: number) {
 }
 function calcUnlockedCount(
   levels: Record<number, { stars: number; passed?: boolean }> | undefined,
-  totalLevels: number
+  totalLevels: number,
 ) {
   let unlocked = 1;
   for (let lv = 1; lv <= totalLevels; lv++) {
@@ -513,25 +513,28 @@ function AuthGate() {
 export default function App() {
   const { session, profile, loading } = useAuth();
 
-  if (loading) {
+  // ✅ 只有「還沒拿到 session」且「正在載入」時才顯示讀取中
+  // 這樣 Supabase 背景 refresh（loading短暫=true）就不會把 LearningQuestApp 卸載掉
+  if (loading && !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         讀取中...
       </div>
     );
   }
-  // 沒 session = 一律回登入
+
+  // ✅ 沒 session = 一律回登入
   if (!session) {
     return <AuthGate />;
   }
 
-  // 有 session 但 profile 還沒填名 = 去補資料
-  if (!profile?.full_name) {
+  // ✅ 有 session，但 profile 還在載入中時：不要提早切到 ProfileSetup（避免 unmount）
+  // 等 loading 結束後，確認真的沒 full_name 才去 ProfileSetup
+  if (!loading && !profile?.full_name) {
     return <ProfileSetup />;
   }
 
-  // 如果已登入，就顯示原本的 LearningQuestApp
-  // 為了方便，我把您原本的 App 內容包成一個新元件
+  // ✅ 正常顯示主程式（背景 refresh 時仍保留畫面與 tab state）
   return <LearningQuestApp />;
 }
 function LearningQuestApp() {
@@ -570,29 +573,29 @@ function LearningQuestApp() {
   const timersRef = useRef<Set<NodeJS.Timeout>>(new Set());
 
   // 1. 監聽新事件並加入 Toast 列表
-useEffect(() => {
-  const events = progress.lastBadgeEvents ?? [];
-  if (!events.length) return;
+  useEffect(() => {
+    const events = progress.lastBadgeEvents ?? [];
+    if (!events.length) return;
 
-  // ✅ 不再用 seenBadgeEventIds 過濾，每次都顯示（因為 lastBadgeEvents 只在新獲得時才有值）
-  const newToasts = events.map((ev, idx) => ({
-    id: `${ev.key}-${ev.tier}-${ev.unlockedAt}-${idx}-${Date.now()}`,
-    key: ev.key,
-    tier: ev.tier,
-    unlockedAt: ev.unlockedAt,
-  }));
+    // ✅ 不再用 seenBadgeEventIds 過濾，每次都顯示（因為 lastBadgeEvents 只在新獲得時才有值）
+    const newToasts = events.map((ev, idx) => ({
+      id: `${ev.key}-${ev.tier}-${ev.unlockedAt}-${idx}-${Date.now()}`,
+      key: ev.key,
+      tier: ev.tier,
+      unlockedAt: ev.unlockedAt,
+    }));
 
-  setBadgeToasts((prev) => [...prev, ...newToasts]);
+    setBadgeToasts((prev) => [...prev, ...newToasts]);
 
-  newToasts.forEach((toast) => {
-    const timerId = setTimeout(() => {
-      setBadgeToasts((prev) => prev.filter((t) => t.id !== toast.id));
-      timersRef.current.delete(timerId);
-    }, 3500);
+    newToasts.forEach((toast) => {
+      const timerId = setTimeout(() => {
+        setBadgeToasts((prev) => prev.filter((t) => t.id !== toast.id));
+        timersRef.current.delete(timerId);
+      }, 3500);
 
-    timersRef.current.add(timerId);
-  });
-}, [progress.lastBadgeEvents]); // ✅ 改這裡
+      timersRef.current.add(timerId);
+    });
+  }, [progress.lastBadgeEvents]); // ✅ 改這裡
 
   // 2. 元件卸載時的清理 (Cleanup)
   useEffect(() => {
@@ -616,12 +619,12 @@ useEffect(() => {
     };
     window.addEventListener(
       "learning-quest:grammar-tetris-report",
-      onReport as EventListener
+      onReport as EventListener,
     );
     return () =>
       window.removeEventListener(
         "learning-quest:grammar-tetris-report",
-        onReport as EventListener
+        onReport as EventListener,
       );
   }, [reportGrammarTetris]);
   // 在「學習區 tab」待久一點，算一次 longSessions
@@ -669,7 +672,7 @@ useEffect(() => {
   // 關卡星數（顯示在選單上）
   const starsByLevel = Array.from(
     { length: 10 },
-    (_, i) => uProg.challenge.levels?.[i + 1]?.stars ?? 0
+    (_, i) => uProg.challenge.levels?.[i + 1]?.stars ?? 0,
   );
   const unlockedCount = calcUnlockedCount(uProg.challenge.levels, 10);
 
@@ -690,7 +693,7 @@ useEffect(() => {
   function handleChallengeFinish(
     score: number,
     timeUsed: number,
-    report?: RunReport
+    report?: RunReport,
   ) {
     const itemsFromRun = (report?.items ?? []).map((it: any) => ({
       ...it,
@@ -730,7 +733,7 @@ useEffect(() => {
         ? prevLv?.bestTimeSec
           ? Math.min(prevLv.bestTimeSec, timeUsed)
           : timeUsed
-        : prevLv?.bestTimeSec ?? 0,
+        : (prevLv?.bestTimeSec ?? 0),
 
       stars: Math.max(prevLv?.stars ?? 0, starsThisRun),
       passed: prevLv?.passed === true ? true : passed,
@@ -747,7 +750,7 @@ useEffect(() => {
     const nextUnlocked = calcUnlockedCount(nextLevels, 10);
     const nextCleared = Math.max(
       uProg.challenge.clearedLevels,
-      nextUnlocked - 1
+      nextUnlocked - 1,
     );
 
     patchUnit(unitId, {
@@ -1029,7 +1032,7 @@ useEffect(() => {
                     onReport={(r: SnakeReport) => {
                       const items: ChallengeItemResult[] = r.logs.map((log) => {
                         const correctIndex = log.options.indexOf(
-                          log.correctTerm
+                          log.correctTerm,
                         );
                         const picked = log.options.indexOf(log.selectedTerm);
                         return {
@@ -1070,8 +1073,7 @@ useEffect(() => {
                         snakeCorrectTotal: r.correct, // 🔸 給 ACCURACY_GOD 用
                       });
                     }}
-                      onRetry={() => reportActivity({ totalRetries: 1 })}
-
+                    onRetry={() => reportActivity({ totalRetries: 1 })}
                   />
                 ) : (
                   <VocabQuiz
@@ -1128,14 +1130,12 @@ useEffect(() => {
                           ...uProg.grammar,
                           reorderBest: Math.max(
                             uProg.grammar.reorderBest,
-                            score
+                            score,
                           ),
                         },
                       });
-                     
                     }}
-                      onRetry={() => reportActivity({ totalRetries: 1 })}
-
+                    onRetry={() => reportActivity({ totalRetries: 1 })}
                   />
                 ))}
 
@@ -1175,7 +1175,7 @@ useEffect(() => {
                           ...uProg.text,
                           arrangeBest: Math.max(
                             uProg.text.arrangeBest,
-                            correct
+                            correct,
                           ),
                         },
                       });
