@@ -10,12 +10,12 @@ export type BadgeUnlockEvent = { key: string; tier: BadgeTier; unlockedAt: strin
 export type CustomThresholds = { bronze: number; silver: number; gold: number; };
 
 export type BadgePlanConfig = {
+  id: string; // 🌟 核心升級：每一個計畫都有獨立的身分證！
   key: string; name: string; category: string; method: string;
   thresholds: CustomThresholds; confidence: number; justification: string;
   retired?: boolean; retireReason?: string; retireNote?: string;
   passReflectReason?: string; passReflectNote?: string;
   updatedAt: string;
-  // 🌟 基準點追蹤系統
   activatedAt?: string;             
   baselineValue?: number;           
   bestValueSincePlan?: number | null; 
@@ -83,22 +83,24 @@ const defaultProgress = (): Progress => ({
 
 const SRL_CUSTOM_KEYS = new Set(["VOCAB_DRILLER", "AUDIO_LEARNER", "SPEED_DEMON", "UNIT_MASTER", "NEVER_GIVE_UP", "COMEBACK_KID"]);
 
-// 🌟 閘門控制：判斷這枚獎章現在「該不該」進行升級評估
+// 🌟 Helper: 尋找該任務目前「正在進行中 (未退休)」的計畫
+export function getActivePlan(key: string, p: Progress): BadgePlanConfig | undefined {
+  return Object.values(p.badgePlans || {}).find(plan => plan.key === key && !plan.retired);
+}
+
 function shouldEvaluateBadge(key: string, p: Progress): boolean {
-  if (!SRL_CUSTOM_KEYS.has(key)) return true; // 非 SRL 獎章，照常評估
-  
-  const plan = p.badgePlans?.[key];
-  if (!plan || plan.retired) return false;    // 實驗組專屬：沒設定或已放棄，凍結評估！
+  if (!SRL_CUSTOM_KEYS.has(key)) return true;
+  const activePlan = getActivePlan(key, p);
+  if (!activePlan) return false; 
   return true;
 }
 
-// 取得判定門檻
 function getEffectiveBadgeRule(key: string, p: Progress) {
   const base = BADGE_QR[key];
   if (!SRL_CUSTOM_KEYS.has(key)) return base;
   
-  const plan = p.badgePlans?.[key];
-  if (!plan || plan.retired) return base; // fallback
+  const plan = getActivePlan(key, p);
+  if (!plan) return base;
   
   return {
     ...base,
@@ -119,7 +121,6 @@ function checkTier(current: number, thresholds: [number, number, number], isReve
   return 0;
 }
 
-// 🌟 原始總數據 (歷史絕對值，不管設定與否永遠累加，供研究分析)
 export function getBadgeValue(key: string, p: Progress): number {
   const s = p.stats;
   const units = Object.values(p.byUnit);
@@ -151,18 +152,15 @@ export function getBadgeValue(key: string, p: Progress): number {
   }
 }
 
-// 🌟 扣除基準點後的「有效進度」 (拿來算獎章用的相對值)
-export function getEffectiveProgress(key: string, p: Progress): number {
+// 🌟 支援傳入特定 plan 計算進度
+export function getEffectiveProgress(key: string, p: Progress, specificPlan?: BadgePlanConfig): number {
   const currentTotal = getBadgeValue(key, p);
   if (!SRL_CUSTOM_KEYS.has(key)) return currentTotal; 
   
-  const plan = p.badgePlans?.[key];
-  if (!plan || plan.retired) return currentTotal;
+  const plan = specificPlan || getActivePlan(key, p);
+  if (!plan) return currentTotal;
 
-  // 極速傳說：回傳設定目標後的最佳秒數
   if (key === "SPEED_DEMON") return plan.bestValueSincePlan ?? 0; 
-  
-  // 一般任務：總數減掉設定當下的基準點
   const baseline = plan.baselineValue ?? 0;
   return Math.max(0, currentTotal - baseline);
 }
@@ -172,11 +170,10 @@ function evaluateBadges(p: Progress): Progress {
   const unlockedEvents: BadgeUnlockEvent[] = [];
 
   for (const key of Object.keys(BADGE_QR)) {
-    // 🌟 閘門防呆：尚未設定或已放棄的 SRL 獎章，跳過評估！
     if (!shouldEvaluateBadge(key, p)) continue;
 
     const def = getEffectiveBadgeRule(key, p); 
-    const effectiveVal = getEffectiveProgress(key, p); // 用扣除舊帳的進度來算
+    const effectiveVal = getEffectiveProgress(key, p); 
     
     const newTier = checkTier(effectiveVal, def.thresholds, def.reverse);
     const old = nextBadges[key];
@@ -202,9 +199,9 @@ type Action =
   | { type: "REPORT_ACTIVITY"; payload: ReportPayload }
   | { type: "RESET" }
   | { type: "LOAD"; progress: Progress }
-  | { type: "UPSERT_BADGE_PLAN"; key: string; plan: BadgePlanConfig }
-  | { type: "RETIRE_BADGE_PLAN"; key: string; reason: string; note: string }
-  | { type: "PASS_REFLECT_BADGE_PLAN"; key: string; reason: string; note: string }
+  | { type: "UPSERT_BADGE_PLAN"; plan: BadgePlanConfig } // 改吃整包 plan
+  | { type: "RETIRE_BADGE_PLAN"; id: string; reason: string; note: string } // 🌟 改用 id
+  | { type: "PASS_REFLECT_BADGE_PLAN"; id: string; reason: string; note: string } // 🌟 改用 id
   | { type: "REPORT_CHALLENGE_RUN"; payload: { score: number; timeUsed: number; stars: number } }; 
 
 function reducer(state: Progress, action: Action): Progress {
@@ -244,27 +241,25 @@ function reducer(state: Progress, action: Action): Progress {
       if (isLearn) stats.currentGameStreak = 0;
       return evaluateBadges({ ...state, stats });
     }
-    // 🌟 專屬攔截 SPEED_DEMON 的時間更新 (只看設定目標之後的挑戰)
     case "REPORT_CHALLENGE_RUN": {
       let newState = { ...state };
       const { timeUsed, stars } = action.payload;
       if (stars >= 1) {
-        const sdPlan = newState.badgePlans["SPEED_DEMON"];
-        if (sdPlan && !sdPlan.retired) {
+        const sdPlan = getActivePlan("SPEED_DEMON", newState); // 🌟 找到進行中的極速傳說
+        if (sdPlan) {
           const currentBest = sdPlan.bestValueSincePlan;
           if (currentBest == null || timeUsed < currentBest) {
-            newState.badgePlans = { ...newState.badgePlans, SPEED_DEMON: { ...sdPlan, bestValueSincePlan: timeUsed } };
+            newState.badgePlans = { ...newState.badgePlans, [sdPlan.id]: { ...sdPlan, bestValueSincePlan: timeUsed } };
           }
         }
       }
       return evaluateBadges(newState);
     }
     case "UPSERT_BADGE_PLAN": {
-      const existed = state.badgePlans[action.key];
-      // 🌟 防覆寫：已經存在且還沒退休的計畫，不允許再修改！
-      if (existed && !existed.retired) return state; 
+      // 🌟 防呆：如果該獎章還有「未退休」的計畫，不允許新增同類型的
+      const hasActive = Object.values(state.badgePlans).some(p => p.key === action.plan.key && !p.retired);
+      if (hasActive) return state; 
 
-      // 🌟 建立基準點 ( Baseline )
       const currentVal = getBadgeValue(action.plan.key, state);
       const newPlan: BadgePlanConfig = {
         ...action.plan,
@@ -273,24 +268,24 @@ function reducer(state: Progress, action: Action): Progress {
         bestValueSincePlan: action.plan.key === "SPEED_DEMON" ? null : undefined,
       };
 
-      const badgePlans = { ...state.badgePlans, [action.key]: newPlan };
+      const badgePlans = { ...state.badgePlans, [action.plan.id]: newPlan };
       return evaluateBadges({ ...state, badgePlans });
     }
     case "RETIRE_BADGE_PLAN": {
-      const prev = state.badgePlans[action.key];
+      const prev = state.badgePlans[action.id];
       if (!prev) return state;
       const badgePlans = {
         ...state.badgePlans,
-        [action.key]: { ...prev, retired: true, retireReason: action.reason, retireNote: action.note, updatedAt: new Date().toISOString() },
+        [action.id]: { ...prev, retired: true, retireReason: action.reason, retireNote: action.note, updatedAt: new Date().toISOString() },
       };
       return evaluateBadges({ ...state, badgePlans }); 
     }
     case "PASS_REFLECT_BADGE_PLAN": {
-      const prev = state.badgePlans[action.key];
+      const prev = state.badgePlans[action.id];
       if (!prev) return state;
       const badgePlans = {
         ...state.badgePlans,
-        [action.key]: { ...prev, passReflectReason: action.reason, passReflectNote: action.note, updatedAt: new Date().toISOString() },
+        [action.id]: { ...prev, passReflectReason: action.reason, passReflectNote: action.note, updatedAt: new Date().toISOString() },
       };
       return { ...state, badgePlans };
     }
@@ -341,9 +336,9 @@ export function useProgress() {
 
   const reset = useCallback(() => dispatch({ type: "RESET" }), []);
 
-  const upsertBadgePlan = useCallback((plan: BadgePlanConfig) => dispatch({ type: "UPSERT_BADGE_PLAN", key: plan.key, plan }), []);
-  const retireBadgePlan = useCallback((key: string, reason: string, note: string) => dispatch({ type: "RETIRE_BADGE_PLAN", key, reason, note }), []);
-  const reflectBadgePlan = useCallback((key: string, reason: string, note: string) => dispatch({ type: "PASS_REFLECT_BADGE_PLAN", key, reason, note }), []);
+  const upsertBadgePlan = useCallback((plan: BadgePlanConfig) => dispatch({ type: "UPSERT_BADGE_PLAN", plan }), []);
+  const retireBadgePlan = useCallback((id: string, reason: string, note: string) => dispatch({ type: "RETIRE_BADGE_PLAN", id, reason, note }), []);
+  const reflectBadgePlan = useCallback((id: string, reason: string, note: string) => dispatch({ type: "PASS_REFLECT_BADGE_PLAN", id, reason, note }), []);
   const reportChallengeRun = useCallback((payload: { score: number; timeUsed: number; stars: number }) => dispatch({ type: "REPORT_CHALLENGE_RUN", payload }), []);
 
   return {
@@ -375,6 +370,15 @@ async function restore(userId: string): Promise<Progress> {
     if (data?.progress && typeof data.progress === "object") {
       const remote = data.progress as Partial<Progress>;
       const def = defaultProgress();
+      
+      // 🌟 舊版相容處理：幫你以前存進去的資料加上 ID，避免壞掉
+      const safeBadgePlans: Record<string, BadgePlanConfig> = {};
+      for (const [k, v] of Object.entries(remote.badgePlans ?? {})) {
+         const plan = v as BadgePlanConfig;
+         if (!plan.id) plan.id = k; 
+         safeBadgePlans[plan.id] = plan;
+      }
+
       return {
         ...def,
         ...remote,
@@ -382,7 +386,7 @@ async function restore(userId: string): Promise<Progress> {
         byUnit: { ...def.byUnit, ...(remote.byUnit ?? {}) },
         badges: sanitizeBadges({ ...def.badges, ...(remote.badges ?? {}) }),
         stats: { ...def.stats, ...(remote.stats ?? {}) },
-        badgePlans: { ...def.badgePlans, ...(remote.badgePlans ?? {}) },
+        badgePlans: safeBadgePlans,
       };
     }
   } catch (e) { console.error("[progress.restore] exception:", e); }
