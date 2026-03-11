@@ -5,10 +5,20 @@ import { supabase } from "../supabaseClient";
 import { useAuth } from "./AuthContext";
 
 // === 型別定義 ===
-export type BadgeUnlockEvent = {
-  key: string; // 例如 "STORY_FAN"
-  tier: BadgeTier; // 1, 2, 3
-  unlockedAt: string;
+export type BadgeUnlockEvent = { key: string; tier: BadgeTier; unlockedAt: string; };
+
+export type CustomThresholds = { bronze: number; silver: number; gold: number; };
+
+export type BadgePlanConfig = {
+  key: string; name: string; category: string; method: string;
+  thresholds: CustomThresholds; confidence: number; justification: string;
+  retired?: boolean; retireReason?: string; retireNote?: string;
+  passReflectReason?: string; passReflectNote?: string;
+  updatedAt: string;
+  // 🌟 基準點追蹤系統
+  activatedAt?: string;             
+  baselineValue?: number;           
+  bestValueSincePlan?: number | null; 
 };
 
 export type Progress = {
@@ -16,190 +26,92 @@ export type Progress = {
   badges: Record<string, BadgeProgress>;
   stats: UserStats;
   totalXP: number;
-  /** 本次狀態更新中「新解鎖或升級」的獎章事件（給 toast 用） */
+  badgePlans: Record<string, BadgePlanConfig>; 
   lastBadgeEvents?: BadgeUnlockEvent[];
 };
 
-export type BadgeTier = 0 | 1 | 2 | 3; // 0: 未解鎖, 1: 銅, 2: 銀, 3: 金
-
-export type BadgeProgress = {
-  tier: BadgeTier;
-  unlockedAtByTier?: Partial<Record<1 | 2 | 3, string>>;
-};
-
+export type BadgeTier = 0 | 1 | 2 | 3;
+export type BadgeProgress = { tier: BadgeTier; unlockedAtByTier?: Partial<Record<1 | 2 | 3, string>>; };
 export type UnitProgress = {
-  stars: number; // 單元整體 0–3 星
-  xp: number;
+  stars: number; xp: number;
   vocab: { studied: number; quizBest: number };
   grammar: { studied: number; reorderBest: number };
   text: { read: number; arrangeBest: number };
-  challenge: {
-    clearedLevels: number; // 最大通關關卡（相容舊版）
-    bestTimeSec: number; // 全單元最佳時間
-    bestScore: number; // 全單元最佳分數
-    levels: Record<
-      number,
-      {
-        bestScore: number;
-        bestTimeSec: number;
-        stars: number;
-        passed?: boolean;
-      }
-    >;
-  };
+  challenge: { clearedLevels: number; bestTimeSec: number; bestScore: number; levels: Record<number, { bestScore: number; bestTimeSec: number; stars: number; passed?: boolean; }>; };
 };
 
-// 用於獎章評估的統計數據
 export type UserStats = {
-  totalLogins: number; // 總登入次數
-  totalTimeSec: number; // 總學習秒數
-  totalErrors: number; // 累積錯誤次數
-  totalHints: number; // 使用提示次數
-  totalRetries: number; // 失敗後重試次數
-  gamesPlayed: number; // 小遊戲遊玩總數
-  perfectRuns: number; // 滿分通關次數
-  storiesRead: number; // 完整閱讀故事次數
-
-  // 進階鼓勵類用
-  longSessions: number; // 單次長時間學習（例如 >= 20 分鐘）的次數
-  closeCalls: number; // 險勝（剛好及格）的次數
-  comebackRuns: number; // 成績大幅進步的次數
-  failedChallenges: number; // 挑戰失敗次數
-  // === 新增的統計欄位 ===
-
-  /** 目前連續玩遊戲的場數（切去學習就歸 0） */
-  currentGameStreak: number;
-
-  /** 曾經達到過的最大連續遊戲場數（用來判斷 GAME_LOVER） */
-  maxGameStreak: number;
-
-  /** 句子排列遊戲獲得「滿分」的累積次數（ARRANGE_PRO 用） */
-  arrangePerfectRuns: number;
-
-  /** 貪吃蛇中吃到正確單字的累積總數（ACCURACY_GOD 用） */
-  snakeCorrectTotal: number;
-
-  /** 點擊單字發音的次數 */
-  totalPronunciations: number;
+  totalLogins: number; totalTimeSec: number; totalErrors: number; totalHints: number; totalRetries: number;
+  gamesPlayed: number; perfectRuns: number; storiesRead: number; longSessions: number; closeCalls: number;
+  comebackRuns: number; failedChallenges: number; currentGameStreak: number; maxGameStreak: number;
+  arrangePerfectRuns: number; snakeCorrectTotal: number; totalPronunciations: number;
 };
 
-// === 獎章定義 ===
-// thresholds: [銅, 銀, 金]
-// reverse = true 表示「數值越小越好」（例如時間越短越好）
-
-export const BADGE_QR: Record<
-  string,
-  {
-    type: "participation" | "skill" | "encouragement";
-    thresholds: [number, number, number];
-    reverse?: boolean;
-  }
-> = {
-  // 參與類 Participation —— 只要願意做就有
-  //STORY_FAN: { type: "participation", thresholds: [1, 5, 10] }, // 完整閱讀故事 1 / 5 / 10 次
-  GAME_LOVER: { type: "participation", thresholds: [3, 6, 10] }, // 連續遊戲場數（3 / 6 / 10 場）
-  VOCAB_DRILLER: { type: "participation", thresholds: [3, 10, 30] }, // 單字練習次數
-  GRAMMAR_NERD: { type: "participation", thresholds: [3, 10, 30] }, // 文法練習次數
-  XP_COLLECTOR: { type: "participation", thresholds: [100, 500, 2000] }, // 累積 XP
-  REVIEWER: { type: "participation", thresholds: [2, 10, 20] }, // 複習（重複遊玩）
-  AUDIO_LEARNER: { type: "participation", thresholds: [10, 50, 100] }, // 累積點擊發音
-
-  // 技巧類 Skill —— 給高成就 / 實力導向的學生
-  SNAKE_MASTER: { type: "skill", thresholds: [10, 30, 60] }, // 貪吃蛇最高分
-  TETRIS_ARCH: { type: "skill", thresholds: [10, 40, 80] }, // 文法 Tetris 消行數
-  // 秒數越少越好：銅 50s、銀 40s、金 30s
+export const BADGE_QR: Record<string, { type: "participation" | "skill" | "encouragement"; thresholds: [number, number, number]; reverse?: boolean; }> = {
+  GAME_LOVER: { type: "participation", thresholds: [3, 6, 10] },
+  VOCAB_DRILLER: { type: "participation", thresholds: [3, 10, 30] },
+  GRAMMAR_NERD: { type: "participation", thresholds: [3, 10, 30] },
+  XP_COLLECTOR: { type: "participation", thresholds: [100, 500, 2000] },
+  REVIEWER: { type: "participation", thresholds: [2, 10, 20] },
+  AUDIO_LEARNER: { type: "participation", thresholds: [10, 50, 100] },
+  SNAKE_MASTER: { type: "skill", thresholds: [10, 30, 60] },
+  TETRIS_ARCH: { type: "skill", thresholds: [10, 40, 80] },
   SPEED_DEMON: { type: "skill", thresholds: [50, 40, 30], reverse: true },
-  STAR_CATCHER: { type: "skill", thresholds: [3, 9, 18] }, // 總星星數
-  ACCURACY_GOD: { type: "skill", thresholds: [5, 15, 30] }, // 高準確率通關次數（以 perfectRuns 代理）
-  LEVEL_CRUSHER: { type: "skill", thresholds: [3, 6, 10] }, // 通過關卡總數
-  UNIT_MASTER: { type: "skill", thresholds: [3, 6, 10] }, // 挑戰區 3★ 關卡累積數
-
-  // 鼓勵類 Encouragement —— 獎勵失敗、嘗試與堅持
-  PERSISTENT: { type: "encouragement", thresholds: [5, 20, 50] }, // 累積錯誤
-  //CURIOUS_MIND: { type: "encouragement", thresholds: [3, 10, 30] }, // 使用提示
-  NEVER_GIVE_UP: { type: "encouragement", thresholds: [1, 5, 15] }, // 重試次數
-  //MARATHONER: { type: "encouragement", thresholds: [1, 3, 10] }, // 長時間學習次數
-  TRY_HARD: { type: "encouragement", thresholds: [10, 50, 100] }, // 總嘗試數（遊戲 + 重試）
-  //SLOW_STEADY: { type: "encouragement", thresholds: [1, 5, 10] }, // 穩紮穩打（這裡以 longSessions 近似）
-  COMEBACK_KID: { type: "encouragement", thresholds: [1, 3, 5] }, // 逆轉勝
-  PRACTICE_MAKE: { type: "encouragement", thresholds: [5, 15, 30] }, // 練習次數（遊戲數）
-  BRAVE_HEART: { type: "encouragement", thresholds: [1, 5, 10] }, // 挑戰失敗次數
-  SURVIVOR: { type: "encouragement", thresholds: [1, 3, 5] }, // 低空飛過次數
+  STAR_CATCHER: { type: "skill", thresholds: [3, 9, 18] },
+  ACCURACY_GOD: { type: "skill", thresholds: [5, 15, 30] },
+  LEVEL_CRUSHER: { type: "skill", thresholds: [3, 6, 10] },
+  UNIT_MASTER: { type: "skill", thresholds: [3, 6, 10] },
+  PERSISTENT: { type: "encouragement", thresholds: [5, 20, 50] },
+  NEVER_GIVE_UP: { type: "encouragement", thresholds: [1, 5, 15] },
+  TRY_HARD: { type: "encouragement", thresholds: [10, 50, 100] },
+  COMEBACK_KID: { type: "encouragement", thresholds: [1, 3, 5] },
+  PRACTICE_MAKE: { type: "encouragement", thresholds: [5, 15, 30] },
+  BRAVE_HEART: { type: "encouragement", thresholds: [1, 5, 10] },
+  SURVIVOR: { type: "encouragement", thresholds: [1, 3, 5] },
 };
-
-// === 預設值 ===
 
 const defaultUnitProgress = (): UnitProgress => ({
-  stars: 0,
-  xp: 0,
-  vocab: { studied: 0, quizBest: 0 },
-  grammar: { studied: 0, reorderBest: 0 },
-  text: { read: 0, arrangeBest: 0 },
-  challenge: {
-    clearedLevels: 0,
-    bestTimeSec: 0,
-    bestScore: 0,
-    levels: {},
-  },
+  stars: 0, xp: 0, vocab: { studied: 0, quizBest: 0 }, grammar: { studied: 0, reorderBest: 0 },
+  text: { read: 0, arrangeBest: 0 }, challenge: { clearedLevels: 0, bestTimeSec: 0, bestScore: 0, levels: {} },
 });
 
 const defaultProgress = (): Progress => ({
-  // 這裡假設 UnitId 是 1–6，如果未來有更多單元可再補
-  byUnit: {
-    1: defaultUnitProgress(),
-    2: defaultUnitProgress(),
-    3: defaultUnitProgress(),
-    4: defaultUnitProgress(),
-    5: defaultUnitProgress(),
-    6: defaultUnitProgress(),
-  } as unknown as Record<UnitId, UnitProgress>,
-  badges: {},
-  stats: {
-    totalLogins: 0,
-    totalTimeSec: 0,
-    totalErrors: 0,
-    totalHints: 0,
-    totalRetries: 0,
-    gamesPlayed: 0,
-    perfectRuns: 0,
-    storiesRead: 0,
-    longSessions: 0,
-    closeCalls: 0,
-    comebackRuns: 0,
-    failedChallenges: 0,
-
-    currentGameStreak: 0,
-    maxGameStreak: 0,
-    arrangePerfectRuns: 0,
-    snakeCorrectTotal: 0,
-    totalPronunciations: 0,
-  },
-  totalXP: 0,
-  lastBadgeEvents: [],
+  byUnit: { 1: defaultUnitProgress(), 2: defaultUnitProgress(), 3: defaultUnitProgress(), 4: defaultUnitProgress(), 5: defaultUnitProgress(), 6: defaultUnitProgress() } as unknown as Record<UnitId, UnitProgress>,
+  badges: {}, stats: { totalLogins: 0, totalTimeSec: 0, totalErrors: 0, totalHints: 0, totalRetries: 0, gamesPlayed: 0, perfectRuns: 0, storiesRead: 0, longSessions: 0, closeCalls: 0, comebackRuns: 0, failedChallenges: 0, currentGameStreak: 0, maxGameStreak: 0, arrangePerfectRuns: 0, snakeCorrectTotal: 0, totalPronunciations: 0 },
+  totalXP: 0, badgePlans: {}, lastBadgeEvents: [],
 });
 
-// === 工具函式 ===
+const SRL_CUSTOM_KEYS = new Set(["VOCAB_DRILLER", "AUDIO_LEARNER", "SPEED_DEMON", "UNIT_MASTER", "NEVER_GIVE_UP", "COMEBACK_KID"]);
 
-{/*function computeStars(u: UnitProgress): number {
-  let s = 0;
-  if (u.vocab.quizBest >= 8) s++;
-  if (u.grammar.reorderBest >= 1) s++; // 做過一次文法遊戲就給一顆
-  if (u.text.arrangeBest >= 8) s++;
-  return s;
-}*/}
+// 🌟 閘門控制：判斷這枚獎章現在「該不該」進行升級評估
+function shouldEvaluateBadge(key: string, p: Progress): boolean {
+  if (!SRL_CUSTOM_KEYS.has(key)) return true; // 非 SRL 獎章，照常評估
+  
+  const plan = p.badgePlans?.[key];
+  if (!plan || plan.retired) return false;    // 實驗組專屬：沒設定或已放棄，凍結評估！
+  return true;
+}
 
-function checkTier(
-  current: number,
-  thresholds: [number, number, number],
-  isReverse = false
-): BadgeTier {
+// 取得判定門檻
+function getEffectiveBadgeRule(key: string, p: Progress) {
+  const base = BADGE_QR[key];
+  if (!SRL_CUSTOM_KEYS.has(key)) return base;
+  
+  const plan = p.badgePlans?.[key];
+  if (!plan || plan.retired) return base; // fallback
+  
+  return {
+    ...base,
+    thresholds: [plan.thresholds.bronze, plan.thresholds.silver, plan.thresholds.gold] as [number, number, number],
+  };
+}
+
+function checkTier(current: number, thresholds: [number, number, number], isReverse = false): BadgeTier {
   if (isReverse) {
-    // 數值越小越好（例如秒數）：必須 > 0 才算
-    if (current > 0 && current <= thresholds[2]) return 3; // 金
-    if (current > 0 && current <= thresholds[1]) return 2; // 銀
-    if (current > 0 && current <= thresholds[0]) return 1; // 銅
+    if (current > 0 && current <= thresholds[2]) return 3;
+    if (current > 0 && current <= thresholds[1]) return 2;
+    if (current > 0 && current <= thresholds[0]) return 1;
   } else {
-    // 數值越大越好
     if (current >= thresholds[2]) return 3;
     if (current >= thresholds[1]) return 2;
     if (current >= thresholds[0]) return 1;
@@ -207,241 +119,188 @@ function checkTier(
   return 0;
 }
 
-// === 給獎章/介面共用：計算每個獎章目前的「數值」 ===
+// 🌟 原始總數據 (歷史絕對值，不管設定與否永遠累加，供研究分析)
 export function getBadgeValue(key: string, p: Progress): number {
   const s = p.stats;
   const units = Object.values(p.byUnit);
-
   switch (key) {
-    // Participation
-
-    //case "STORY_FAN":
-      //return s.storiesRead;
-    // GAME_LOVER：最大連續遊戲場數
-    case "GAME_LOVER":
-      return s.maxGameStreak;
-    case "VOCAB_DRILLER":
-      return units.reduce((acc, u) => acc + u.vocab.studied, 0);
-    case "GRAMMAR_NERD":
-      return units.reduce((acc, u) => acc + u.grammar.studied, 0);
-    case "XP_COLLECTOR":
-      return p.totalXP;
-    case "REVIEWER":
-      return s.gamesPlayed;
-    case "AUDIO_LEARNER":
-      return s.totalPronunciations;
-
-    // Skill
-    case "SNAKE_MASTER": {
-      const maxSnake = Math.max(...units.map((u) => u.vocab.quizBest), 0);
-      return maxSnake;
-    }
-    case "TETRIS_ARCH": {
-      const maxTetris = Math.max(...units.map((u) => u.grammar.reorderBest), 0);
-      return maxTetris;
-    }
+    case "GAME_LOVER": return s.maxGameStreak;
+    case "VOCAB_DRILLER": return units.reduce((acc, u) => acc + u.vocab.studied, 0);
+    case "GRAMMAR_NERD": return units.reduce((acc, u) => acc + u.grammar.studied, 0);
+    case "XP_COLLECTOR": return p.totalXP;
+    case "REVIEWER": return s.gamesPlayed;
+    case "AUDIO_LEARNER": return s.totalPronunciations;
+    case "SNAKE_MASTER": return Math.max(...units.map((u) => u.vocab.quizBest), 0);
+    case "TETRIS_ARCH": return Math.max(...units.map((u) => u.grammar.reorderBest), 0);
     case "SPEED_DEMON": {
-      // ✅ 只計入「至少 1★」的關卡秒數，避免 0★ 刷秒
-      const allTimes = units
-        .flatMap((u) => Object.values(u.challenge.levels || {}))
-        .filter((lv) => (lv.stars ?? 0) >= 1 && (lv.bestTimeSec ?? 0) > 0)
-        .map((lv) => lv.bestTimeSec);
-
-      const fastest = allTimes.length > 0 ? Math.min(...allTimes) : 0;
-      return fastest;
+      const allTimes = units.flatMap((u) => Object.values(u.challenge.levels || {})).filter((lv) => (lv.stars ?? 0) >= 1 && (lv.bestTimeSec ?? 0) > 0).map((lv) => lv.bestTimeSec);
+      return allTimes.length > 0 ? Math.min(...allTimes) : 0;
     }
-
-    case "STAR_CATCHER": {
-      const challengeStars = units.reduce((acc, u) => {
-        const levelStars = Object.values(u.challenge.levels || {}).reduce(
-          (sum, lv) => sum + (lv.stars ?? 0),
-          0
-        );
-        return acc + levelStars;
-      }, 0);
-      return challengeStars;
-    }
-    case "ACCURACY_GOD":
-      return s.snakeCorrectTotal;
-    case "LEVEL_CRUSHER": {
-      // ✅ 改成「通過的關卡數」：passed === true 或 stars >= 2 都算通關
-      const passedCount = units.reduce((acc, u) => {
-        const passedInUnit = Object.values(u.challenge.levels || {}).filter(
-          (lv) => lv.passed === true || (lv.stars ?? 0) >= 2
-        ).length;
-        return acc + passedInUnit;
-      }, 0);
-
-      return passedCount;
-    }
-
-    case "UNIT_MASTER": {
-      // 單元制霸：統計「挑戰區拿到 3★ 的關卡數」
-      const totalThreeStarLevels = units.reduce((acc, u) => {
-        const threeStar = Object.values(u.challenge.levels || {}).filter(
-          (lv) => (lv.stars ?? 0) >= 3
-        ).length;
-        return acc + threeStar;
-      }, 0);
-
-      return totalThreeStarLevels;
-    }
-
-    // Encouragement
-    case "PERSISTENT":
-      return s.totalErrors;
-    //case "CURIOUS_MIND":
-      //return s.totalHints;
-    case "NEVER_GIVE_UP":
-      return s.totalRetries;
-    //case "MARATHONER":
-      //return s.longSessions;
-    case "TRY_HARD":
-      return s.gamesPlayed + s.totalRetries;
-    //case "SLOW_STEADY":
-      //return s.longSessions;
-    case "COMEBACK_KID":
-      return s.comebackRuns;
-    case "PRACTICE_MAKE":
-      return s.gamesPlayed;
-    case "BRAVE_HEART":
-      return s.failedChallenges;
-    case "SURVIVOR":
-      return s.closeCalls;
-
-    default:
-      return 0;
+    case "STAR_CATCHER": return units.reduce((acc, u) => acc + Object.values(u.challenge.levels || {}).reduce((sum, lv) => sum + (lv.stars ?? 0), 0), 0);
+    case "ACCURACY_GOD": return s.snakeCorrectTotal;
+    case "LEVEL_CRUSHER": return units.reduce((acc, u) => acc + Object.values(u.challenge.levels || {}).filter((lv) => lv.passed === true || (lv.stars ?? 0) >= 2).length, 0);
+    case "UNIT_MASTER": return units.reduce((acc, u) => acc + Object.values(u.challenge.levels || {}).filter((lv) => (lv.stars ?? 0) >= 3).length, 0);
+    case "PERSISTENT": return s.totalErrors;
+    case "NEVER_GIVE_UP": return s.totalRetries;
+    case "TRY_HARD": return s.gamesPlayed + s.totalRetries;
+    case "COMEBACK_KID": return s.comebackRuns;
+    case "PRACTICE_MAKE": return s.gamesPlayed;
+    case "BRAVE_HEART": return s.failedChallenges;
+    case "SURVIVOR": return s.closeCalls;
+    default: return 0;
   }
 }
 
-// 依據目前 Progress 計算所有獎章
+// 🌟 扣除基準點後的「有效進度」 (拿來算獎章用的相對值)
+export function getEffectiveProgress(key: string, p: Progress): number {
+  const currentTotal = getBadgeValue(key, p);
+  if (!SRL_CUSTOM_KEYS.has(key)) return currentTotal; 
+  
+  const plan = p.badgePlans?.[key];
+  if (!plan || plan.retired) return currentTotal;
+
+  // 極速傳說：回傳設定目標後的最佳秒數
+  if (key === "SPEED_DEMON") return plan.bestValueSincePlan ?? 0; 
+  
+  // 一般任務：總數減掉設定當下的基準點
+  const baseline = plan.baselineValue ?? 0;
+  return Math.max(0, currentTotal - baseline);
+}
+
 function evaluateBadges(p: Progress): Progress {
   const nextBadges: Record<string, BadgeProgress> = { ...p.badges };
   const unlockedEvents: BadgeUnlockEvent[] = [];
 
   for (const key of Object.keys(BADGE_QR)) {
-    const def = BADGE_QR[key];
-    const currentVal = getBadgeValue(key, p);
-    const newTier = checkTier(currentVal, def.thresholds, def.reverse);
+    // 🌟 閘門防呆：尚未設定或已放棄的 SRL 獎章，跳過評估！
+    if (!shouldEvaluateBadge(key, p)) continue;
+
+    const def = getEffectiveBadgeRule(key, p); 
+    const effectiveVal = getEffectiveProgress(key, p); // 用扣除舊帳的進度來算
+    
+    const newTier = checkTier(effectiveVal, def.thresholds, def.reverse);
     const old = nextBadges[key];
     const oldTier = old?.tier ?? 0;
 
     if (newTier > oldTier) {
       const ts = new Date().toISOString();
-
-      // ✅ 保留每個 tier 的時間
       const prevByTier = old?.unlockedAtByTier ?? {};
-      const nextByTier =
-        newTier >= 1
-          ? ({
-              ...prevByTier,
-              [newTier]: ts,
-            } as BadgeProgress["unlockedAtByTier"])
-          : prevByTier;
-
-      nextBadges[key] = {
-        tier: newTier,
-        unlockedAtByTier: nextByTier,
-      };
-
+      const nextByTier = newTier >= 1 ? ({ ...prevByTier, [newTier]: ts } as BadgeProgress["unlockedAtByTier"]) : prevByTier;
+      nextBadges[key] = { tier: newTier, unlockedAtByTier: nextByTier };
       unlockedEvents.push({ key, tier: newTier, unlockedAt: ts });
     }
   }
-
-  return {
-    ...p,
-    badges: nextBadges,
-    lastBadgeEvents: unlockedEvents,
-  };
+  return { ...p, badges: nextBadges, lastBadgeEvents: unlockedEvents };
 }
 
 // === Reducer ===
-
-type ReportPayload = Partial<UserStats> & {
-  /** 這次的回報是「遊戲」行為 */
-  isGame?: boolean;
-  /** 這次的回報是「學習」行為 */
-  isLearn?: boolean;
-};
+type ReportPayload = Partial<UserStats> & { isGame?: boolean; isLearn?: boolean; };
 
 type Action =
   | { type: "ADD_XP"; unit: UnitId; amount: number }
   | { type: "PATCH_UNIT"; unit: UnitId; patch: Partial<UnitProgress> }
   | { type: "REPORT_ACTIVITY"; payload: ReportPayload }
   | { type: "RESET" }
-  | { type: "LOAD"; progress: Progress };
+  | { type: "LOAD"; progress: Progress }
+  | { type: "UPSERT_BADGE_PLAN"; key: string; plan: BadgePlanConfig }
+  | { type: "RETIRE_BADGE_PLAN"; key: string; reason: string; note: string }
+  | { type: "PASS_REFLECT_BADGE_PLAN"; key: string; reason: string; note: string }
+  | { type: "REPORT_CHALLENGE_RUN"; payload: { score: number; timeUsed: number; stars: number } }; 
 
 function reducer(state: Progress, action: Action): Progress {
   switch (action.type) {
     case "ADD_XP": {
       const byUnit = { ...state.byUnit };
       const u = byUnit[action.unit] ?? defaultUnitProgress();
-      const nextUnit: UnitProgress = { ...u, xp: u.xp + action.amount };
-      //nextUnit.stars = computeStars(nextUnit);
-      byUnit[action.unit] = nextUnit;
-      return evaluateBadges({
-        ...state,
-        byUnit,
-        totalXP: state.totalXP + action.amount,
-      });
+      byUnit[action.unit] = { ...u, xp: u.xp + action.amount };
+      return evaluateBadges({ ...state, byUnit, totalXP: state.totalXP + action.amount });
     }
     case "PATCH_UNIT": {
       const byUnit = { ...state.byUnit };
       const prev = byUnit[action.unit] ?? defaultUnitProgress();
       const patch = action.patch as any;
-      const nextUnit: UnitProgress = {
-        ...prev,
-        ...patch,
+      byUnit[action.unit] = {
+        ...prev, ...patch,
         vocab: { ...prev.vocab, ...(patch.vocab ?? {}) },
         grammar: { ...prev.grammar, ...(patch.grammar ?? {}) },
         text: { ...prev.text, ...(patch.text ?? {}) },
         challenge: { ...prev.challenge, ...(patch.challenge ?? {}) },
       };
-      //nextUnit.stars = computeStars(nextUnit);
-      byUnit[action.unit] = nextUnit;
       return evaluateBadges({ ...state, byUnit });
     }
-
     case "REPORT_ACTIVITY": {
       const stats: UserStats = { ...state.stats };
       const { isGame, isLearn, ...rest } = action.payload;
-
-      // 1. 一般數值累加（UserStats 裡對應的欄位都會 +）
       Object.entries(rest).forEach(([k, v]) => {
         if (typeof v === "number") {
           const key = k as keyof UserStats;
           stats[key] = (stats[key] ?? 0) + v;
         }
       });
-
-      // 2. Streak 邏輯（GAME_LOVER 用）
       if (isGame) {
         stats.currentGameStreak = (stats.currentGameStreak ?? 0) + 1;
-        stats.maxGameStreak = Math.max(
-          stats.maxGameStreak ?? 0,
-          stats.currentGameStreak
-        );
+        stats.maxGameStreak = Math.max(stats.maxGameStreak ?? 0, stats.currentGameStreak);
       }
-
-      if (isLearn) {
-        // 一旦去做學習活動，就視為中斷遊戲連續
-        stats.currentGameStreak = 0;
-      }
-
+      if (isLearn) stats.currentGameStreak = 0;
       return evaluateBadges({ ...state, stats });
     }
+    // 🌟 專屬攔截 SPEED_DEMON 的時間更新 (只看設定目標之後的挑戰)
+    case "REPORT_CHALLENGE_RUN": {
+      let newState = { ...state };
+      const { timeUsed, stars } = action.payload;
+      if (stars >= 1) {
+        const sdPlan = newState.badgePlans["SPEED_DEMON"];
+        if (sdPlan && !sdPlan.retired) {
+          const currentBest = sdPlan.bestValueSincePlan;
+          if (currentBest == null || timeUsed < currentBest) {
+            newState.badgePlans = { ...newState.badgePlans, SPEED_DEMON: { ...sdPlan, bestValueSincePlan: timeUsed } };
+          }
+        }
+      }
+      return evaluateBadges(newState);
+    }
+    case "UPSERT_BADGE_PLAN": {
+      const existed = state.badgePlans[action.key];
+      // 🌟 防覆寫：已經存在且還沒退休的計畫，不允許再修改！
+      if (existed && !existed.retired) return state; 
 
-    case "RESET":
-      return defaultProgress();
-    case "LOAD":
-      return evaluateBadges(action.progress);
-    default:
-      return state;
+      // 🌟 建立基準點 ( Baseline )
+      const currentVal = getBadgeValue(action.plan.key, state);
+      const newPlan: BadgePlanConfig = {
+        ...action.plan,
+        activatedAt: new Date().toISOString(),
+        baselineValue: action.plan.key !== "SPEED_DEMON" ? currentVal : undefined,
+        bestValueSincePlan: action.plan.key === "SPEED_DEMON" ? null : undefined,
+      };
+
+      const badgePlans = { ...state.badgePlans, [action.key]: newPlan };
+      return evaluateBadges({ ...state, badgePlans });
+    }
+    case "RETIRE_BADGE_PLAN": {
+      const prev = state.badgePlans[action.key];
+      if (!prev) return state;
+      const badgePlans = {
+        ...state.badgePlans,
+        [action.key]: { ...prev, retired: true, retireReason: action.reason, retireNote: action.note, updatedAt: new Date().toISOString() },
+      };
+      return evaluateBadges({ ...state, badgePlans }); 
+    }
+    case "PASS_REFLECT_BADGE_PLAN": {
+      const prev = state.badgePlans[action.key];
+      if (!prev) return state;
+      const badgePlans = {
+        ...state.badgePlans,
+        [action.key]: { ...prev, passReflectReason: action.reason, passReflectNote: action.note, updatedAt: new Date().toISOString() },
+      };
+      return { ...state, badgePlans };
+    }
+    case "RESET": return defaultProgress();
+    case "LOAD": return evaluateBadges(action.progress);
+    default: return state;
   }
 }
 
 // === Hook ===
-
 export function useProgress() {
   const { session } = useAuth();
   const userId = session?.user?.id as string | undefined;
@@ -450,135 +309,68 @@ export function useProgress() {
   const [loading, setLoading] = useState(true);
   const isSaving = useRef(false);
 
-  // 從 Supabase 載入
   useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+    if (!userId) { setLoading(false); return; }
     setLoading(true);
     restore(userId)
       .then((p) => {
-        // 登入次數 +1
         p.stats.totalLogins = (p.stats.totalLogins ?? 0) + 1;
         dispatch({ type: "LOAD", progress: p });
       })
       .finally(() => setLoading(false));
   }, [userId]);
 
-  // 自動存檔
   useEffect(() => {
     if (!userId || loading) return;
     if (isSaving.current) return;
     isSaving.current = true;
-    persist(progress, userId).finally(() => {
-      isSaving.current = false;
-    });
+    persist(progress, userId).finally(() => { isSaving.current = false; });
   }, [progress, userId, loading]);
 
-  // 封裝操作
-  const addXP = useCallback(
-    (unit: UnitId, amount: number) =>
-      dispatch({ type: "ADD_XP", unit, amount }),
-    []
-  );
+  const addXP = useCallback((unit: UnitId, amount: number) => dispatch({ type: "ADD_XP", unit, amount }), []);
+  const patchUnit = useCallback((unit: UnitId, patch: Partial<UnitProgress>) => dispatch({ type: "PATCH_UNIT", unit, patch }), []);
+  const reportActivity = useCallback((payload: ReportPayload) => dispatch({ type: "REPORT_ACTIVITY", payload }), []);
 
-  const patchUnit = useCallback(
-    (unit: UnitId, patch: Partial<UnitProgress>) =>
-      dispatch({ type: "PATCH_UNIT", unit, patch }),
-    []
-  );
+  const reportGrammarTetris = useCallback((payload: { roundsPlayed: number; reason: "completed" | "no-fit" | "wrong-limit"; }) => {
+    reportActivity({ isGame: true, gamesPlayed: 1, failedChallenges: payload.reason === "wrong-limit" ? 1 : 0 });
+  }, [reportActivity]);
 
-  const reportActivity = useCallback(
-    (payload: ReportPayload) => dispatch({ type: "REPORT_ACTIVITY", payload }),
-    []
-  );
+  const reportSnake = useCallback((payload: { correct: number; total: number; wrong: number; usedTime?: number; }) => {
+    reportActivity({ isGame: true, gamesPlayed: 1, totalErrors: payload.wrong, totalTimeSec: payload.usedTime ?? 0, snakeCorrectTotal: payload.correct });
+  }, [reportActivity]);
 
-  // 給 Grammar Tetris 用
-  const reportGrammarTetris = useCallback(
-    (payload: {
-      roundsPlayed: number;
-      reason: "completed" | "no-fit" | "wrong-limit";
-    }) => {
-      reportActivity({
-        isGame: true, // ✅ 這是一場遊戲
-        gamesPlayed: 1,
-        failedChallenges: payload.reason === "wrong-limit" ? 1 : 0,
-        // 你也可以加上互動量的概念（之後要做 TOTAL_STEPS 時很好用）
-        // interactionCount: payload.roundsPlayed * 5,
-      });
-    },
-    [reportActivity]
-  );
+  const reset = useCallback(() => dispatch({ type: "RESET" }), []);
 
-  // 給 Snake 用
-  const reportSnake = useCallback(
-    (payload: {
-      correct: number;
-      total: number;
-      wrong: number;
-      usedTime?: number;
-    }) => {
-      reportActivity({
-        isGame: true, // ✅ 這是一場遊戲
-        gamesPlayed: 1,
-        totalErrors: payload.wrong,
-        totalTimeSec: payload.usedTime ?? 0,
-        snakeCorrectTotal: payload.correct, // ✅ 對 ACCURACY_GOD / SNAKE_EATER 用
-        // interactionCount: payload.correct + payload.wrong,
-      });
-    },
-    [reportActivity]
-  );
-
-  const reset = useCallback(() => {
-    dispatch({ type: "RESET" });
-  }, []);
+  const upsertBadgePlan = useCallback((plan: BadgePlanConfig) => dispatch({ type: "UPSERT_BADGE_PLAN", key: plan.key, plan }), []);
+  const retireBadgePlan = useCallback((key: string, reason: string, note: string) => dispatch({ type: "RETIRE_BADGE_PLAN", key, reason, note }), []);
+  const reflectBadgePlan = useCallback((key: string, reason: string, note: string) => dispatch({ type: "PASS_REFLECT_BADGE_PLAN", key, reason, note }), []);
+  const reportChallengeRun = useCallback((payload: { score: number; timeUsed: number; stars: number }) => dispatch({ type: "REPORT_CHALLENGE_RUN", payload }), []);
 
   return {
     progress,
-    addXP,
-    patchUnit,
-    reportActivity,
-    reportGrammarTetris,
-    reportSnake,
-    reset,
+    addXP, patchUnit, reportActivity, reportGrammarTetris, reportSnake, reset,
+    upsertBadgePlan, retireBadgePlan, reflectBadgePlan, reportChallengeRun,
     loadingProgress: loading,
   };
 }
+
 function sanitizeBadges(input: any): Record<string, BadgeProgress> {
   const out: Record<string, BadgeProgress> = {};
-
   for (const [k, v] of Object.entries(input ?? {})) {
     const rawTier = (v as any)?.tier;
     const tierNum = typeof rawTier === "string" ? Number(rawTier) : rawTier;
-    const tier: BadgeTier =
-      tierNum === 1 || tierNum === 2 || tierNum === 3 ? tierNum : 0;
-
-    // ✅ v 可能是 null/undefined/非物件，避免 ...v 爆炸
+    const tier: BadgeTier = tierNum === 1 || tierNum === 2 || tierNum === 3 ? tierNum : 0;
     const base = v && typeof v === "object" ? (v as any) : {};
-
     out[k] = { ...base, tier };
   }
-
   return out;
 }
 
-
 // === Supabase 存取 ===
-
 async function restore(userId: string): Promise<Progress> {
   try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("progress")
-      .eq("id", userId)
-      .single();
-
-    if (error) {
-      console.error("[progress.restore] error:", error);
-      return defaultProgress();
-    }
+    const { data, error } = await supabase.from("profiles").select("progress").eq("id", userId).single();
+    if (error) { console.error("[progress.restore] error:", error); return defaultProgress(); }
 
     if (data?.progress && typeof data.progress === "object") {
       const remote = data.progress as Partial<Progress>;
@@ -588,32 +380,18 @@ async function restore(userId: string): Promise<Progress> {
         ...remote,
         lastBadgeEvents: [],
         byUnit: { ...def.byUnit, ...(remote.byUnit ?? {}) },
-badges: sanitizeBadges({ ...def.badges, ...(remote.badges ?? {}) }),
+        badges: sanitizeBadges({ ...def.badges, ...(remote.badges ?? {}) }),
         stats: { ...def.stats, ...(remote.stats ?? {}) },
+        badgePlans: { ...def.badgePlans, ...(remote.badgePlans ?? {}) },
       };
     }
-  } catch (e) {
-    console.error("[progress.restore] exception:", e);
-  }
+  } catch (e) { console.error("[progress.restore] exception:", e); }
   return defaultProgress();
 }
 
 async function persist(p: Progress, userId: string) {
   try {
-    const { lastBadgeEvents, ...persistable } = p;
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        progress: persistable,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", userId);
-
-    if (error) {
-      console.error("[progress.persist] error:", error);
-    }
-  } catch (e) {
-    console.error("[progress.persist] exception:", e);
-  }
+    const { lastBadgeEvents, ...persistable } = p; 
+    await supabase.from("profiles").update({ progress: persistable, updated_at: new Date().toISOString() }).eq("id", userId);
+  } catch (e) { console.error("[progress.persist] exception:", e); }
 }

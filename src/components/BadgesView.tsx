@@ -1,94 +1,32 @@
 // src/components/BadgesView.tsx
-import type { Progress, BadgeTier } from "../state/progress";
-import { BADGE_QR, getBadgeValue } from "../state/progress";
+import type { Progress, BadgeTier, BadgePlanConfig, CustomThresholds } from "../state/progress";
+import { BADGE_QR, getBadgeValue, getEffectiveProgress } from "../state/progress";
 import { useMemo, useState } from "react";
 import { Card, SectionTitle } from "./ui";
 
-// 顯示文字（名稱 + 說明）
 export const BADGE_META: Record<string, { name: string; desc: string }> = {
-  GAME_LOVER: {
-    name: "遊戲狂熱",
-    desc: "在同一次遊戲連續挑戰中，最高連勝場數達到：銅 3 場｜銀 6 場｜金 10 場",
-  },
-  VOCAB_DRILLER: {
-    name: "單字達人",
-    desc: "完成「單字集」研讀次數累積：銅 3 次｜銀 10 次｜金 30 次",
-  },
-  GRAMMAR_NERD: {
-    name: "文法專家",
-    desc: "完成「文法說明」掌握/學習次數累積：銅 3 次｜銀 10 次｜金 30 次",
-  },
-  XP_COLLECTOR: {
-    name: "經驗收藏家",
-    desc: "累積總 XP 達到：銅 100｜銀 500｜金 2000",
-  },
-  REVIEWER: {
-    name: "愛玩遊戲",
-    desc: "累積遊玩遊戲場次達到：銅 2 場｜銀 10 場｜金 20 場",
-  },
-  AUDIO_LEARNER: {
-    name: "聽力小耳朵",
-    desc: "點擊單字發音（播放音檔）累積：銅 10 次｜銀 50 次｜金 100 次",
-  },
-  SNAKE_MASTER: {
-    name: "貪吃蛇王",
-    desc: "單字測驗最高分（目前以「單字測驗最佳分」計算）達到：銅 10｜銀 30｜金 60",
-  },
-  TETRIS_ARCH: {
-    name: "方塊建築師",
-    desc: "文法方塊最高成績（最高消除行/列數）達到：銅 10｜銀 40｜金 80",
-  },
-  SPEED_DEMON: {
-    name: "極速傳說",
-    desc: "挑戰區中「曾經達成至少 1★」的關卡，最快完成時間達到：銅 ≤50 秒｜銀 ≤40 秒｜金 ≤30 秒",
-  },
-  STAR_CATCHER: {
-    name: "摘星者",
-    desc: "挑戰區累積獲得星星數達到：銅 3 顆｜銀 9 顆｜金 18 顆",
-  },
-  ACCURACY_GOD: {
-    name: "愛吃的蛇",
-    desc: "貪吃蛇累積「答對的單字數」達到：銅 5｜銀 15｜金 30",
-  },
-  LEVEL_CRUSHER: {
-    name: "過關斬將",
-    desc: "挑戰區通過的關卡數累積：銅 3 關｜銀 6 關｜金 10 關（通過＝該關達到 ≥2★ 或被標記為 passed）",
-  },
-  UNIT_MASTER: {
-    name: "單元制霸",
-    desc: "挑戰區累積獲得 3★ 的關卡數達到：銅 3 關｜銀 6 關｜金 10 關",
-  },
-  PERSISTENT: {
-    name: "越挫越勇",
-    desc: "累積錯誤次數達到：銅 5 次｜銀 20 次｜金 50 次（挑戰/遊戲答錯都會累加）",
-  },
-  NEVER_GIVE_UP: {
-    name: "永不放棄",
-    desc: "按下重新開始/重試的次數累積：銅 1 次｜銀 5 次｜金 15 次",
-  },
-  TRY_HARD: {
-    name: "勤能補拙",
-    desc: "總嘗試次數累積（遊戲場次 + 重試次數）：銅 10｜銀 50｜金 100",
-  },
-  COMEBACK_KID: {
-    name: "逆轉勝",
-    desc: "挑戰同一關時，分數比過去最佳成績提升 ≥3 分的次數：銅 1 次｜銀 3 次｜金 5 次",
-  },
-  PRACTICE_MAKE: {
-    name: "熟能生巧",
-    desc: "累積遊玩遊戲場次達到：銅 5 場｜銀 15 場｜金 30 場",
-  },
-  BRAVE_HEART: {
-    name: "勇敢的心",
-    desc: "挑戰失敗次數累積：銅 1 次｜銀 5 次｜金 10 次",
-  },
-  SURVIVOR: {
-    name: "倖存者",
-    desc: "驚險通關次數累積：銅 1 次｜銀 3 次｜金 5 次（目前定義：挑戰區通關且分數剛好 7 分）",
-  },
+  GAME_LOVER: { name: "遊戲狂熱", desc: "在同一次遊戲連續挑戰中，最高連勝場數" },
+  VOCAB_DRILLER: { name: "單字達人", desc: "完成「單字集」研讀次數累積" },
+  GRAMMAR_NERD: { name: "文法專家", desc: "完成「文法說明」掌握/學習次數累積" },
+  XP_COLLECTOR: { name: "經驗收藏家", desc: "累積總 XP 達到門檻" },
+  REVIEWER: { name: "愛玩遊戲", desc: "累積遊玩遊戲場次達到門檻" },
+  AUDIO_LEARNER: { name: "聽力小耳朵", desc: "點擊單字發音（播放音檔）累積次數" },
+  SNAKE_MASTER: { name: "貪吃蛇王", desc: "單字測驗最佳分達到門檻" },
+  TETRIS_ARCH: { name: "方塊建築師", desc: "文法方塊最高成績達到門檻" },
+  SPEED_DEMON: { name: "極速傳說", desc: "挑戰區中「至少 1★」關卡的最快完成時間" },
+  STAR_CATCHER: { name: "摘星者", desc: "挑戰區累積獲得星星數達到門檻" },
+  ACCURACY_GOD: { name: "愛吃的蛇", desc: "貪吃蛇累積「答對的單字數」達到門檻" },
+  LEVEL_CRUSHER: { name: "過關斬將", desc: "挑戰區通過的關卡數累積" },
+  UNIT_MASTER: { name: "單元制霸", desc: "挑戰區累積獲得 3★ 的關卡數" },
+  PERSISTENT: { name: "越挫越勇", desc: "累積錯誤次數達到門檻" },
+  NEVER_GIVE_UP: { name: "永不放棄", desc: "按下重新開始/重試的次數累積" },
+  TRY_HARD: { name: "勤能補拙", desc: "總嘗試次數累積（遊戲場次 + 重試次數）" },
+  COMEBACK_KID: { name: "逆轉勝", desc: "挑戰同一關時，分數比過去最佳成績提升 ≥3 分的次數" },
+  PRACTICE_MAKE: { name: "熟能生巧", desc: "累積遊玩遊戲場次達到門檻" },
+  BRAVE_HEART: { name: "勇敢的心", desc: "挑戰失敗次數累積" },
+  SURVIVOR: { name: "倖存者", desc: "驚險通關次數累積" },
 };
 
-// 等級樣式
 export const TIER_STYLES: Record<BadgeTier, string> = {
   0: "bg-neutral-50 text-neutral-700 border-neutral-100",
   1: "bg-orange-50 text-amber-800 border-orange-200",
@@ -96,503 +34,159 @@ export const TIER_STYLES: Record<BadgeTier, string> = {
   3: "bg-yellow-50 text-yellow-800 border-yellow-300 ring-1 ring-yellow-200 shadow-sm",
 };
 
-export const TIER_NAMES: Record<BadgeTier, string> = {
-  0: "未解鎖",
-  1: "銅級",
-  2: "銀級",
-  3: "金級",
-};
+export const TIER_NAMES: Record<BadgeTier, string> = { 0: "未解鎖", 1: "銅級", 2: "銀級", 3: "金級" };
+export const TIER_ICONS: Record<BadgeTier, string> = { 0: "🔒", 1: "🥉", 2: "🥈", 3: "🥇" };
 
-export const TIER_ICONS: Record<BadgeTier, string> = {
-  0: "🔒",
-  1: "🥉",
-  2: "🥈",
-  3: "🥇",
-};
+const SRL_HIDDEN_KEYS = ["VOCAB_DRILLER", "AUDIO_LEARNER", "SPEED_DEMON", "UNIT_MASTER", "NEVER_GIVE_UP", "COMEBACK_KID"] as const;
+const MAX_PLANS = 6;
 
-const SRL_HIDDEN_KEYS = [
-  "VOCAB_DRILLER",
-  "AUDIO_LEARNER",
-  "SPEED_DEMON",
-  "UNIT_MASTER",
-  "NEVER_GIVE_UP",
-  "COMEBACK_KID",
-] as const;
-
-const MAX_PLANS = 3;
-
-// === SRL 規劃資料型別 ===
-type BadgePlanCategory = "學習類" | "技巧類" | "鼓勵類";
-
-type BadgePlanRow = {
-  key: string;
-  name: string;
-  category: BadgePlanCategory;
-  method: string;
-  condition: string;
-  confidence: 1 | 2 | 3 | 4 | 5;
-  justification: string;
-};
-
-type PlannedBadge = BadgePlanRow & {
-  slot: number; // 第幾次規劃（1..MAX_PLANS）
-  retired?: boolean;
-  retireReason?: string;
-  retireNote?: string;
-
-  // ✅ 通關反思（tier>=1 才會要求在開始下一枚前填寫）
-  passReflectReason?: string; // 下拉原因
-  passReflectNote?: string; // 自由輸入
-};
-
-const SRL_BADGE_TEMPLATES: Array<
-  Pick<BadgePlanRow, "key" | "name" | "category" | "method" | "condition">
-> = [
-  {
-    key: "VOCAB_DRILLER",
-    name: "單字達人",
-    category: "學習類",
-    method:
-      "完成『單字集』研讀次數（所有單元 u.vocab.studied 的總和；累積研讀次數）",
-    condition: "例如：銅 3｜銀 10｜金 30（次）",
-  },
-  {
-    key: "AUDIO_LEARNER",
-    name: "聽力小耳朵",
-    category: "學習類",
-    method: "點擊播放單字發音累積（stats.totalPronunciations）",
-    condition: "例如：銅 10｜銀 50｜金 100（次）",
-  },
-  {
-    key: "SPEED_DEMON",
-    name: "極速傳說",
-    category: "技巧類",
-    method:
-      "挑戰區最快完成時間（篩選 stars>=1 且 bestTimeSec>0 的關卡，取 bestTimeSec 最小值；越小越好）",
-    condition: "例如：銅 ≤50｜銀 ≤40｜金 ≤30（秒）",
-  },
-  {
-    key: "UNIT_MASTER",
-    name: "單元制霸",
-    category: "技巧類",
-    method: "挑戰區獲得 3★ 的關卡數總和（統計 stars>=3 的關卡數）",
-    condition: "例如：銅 3｜銀 6｜金 10（關）",
-  },
-  {
-    key: "NEVER_GIVE_UP",
-    name: "永不放棄",
-    category: "鼓勵類",
-    method: "重試/重新開始的累積次數（stats.totalRetries）",
-    condition: "例如：銅 1｜銀 5｜金 15（次）",
-  },
-  {
-    key: "COMEBACK_KID",
-    name: "逆轉勝",
-    category: "鼓勵類",
-    method: "同一關卡分數比過去最佳成績提升 ≥3 分的次數（stats.comebackRuns）",
-    condition: "例如：銅 1｜銀 3｜金 5（次）",
-  },
+const SRL_BADGE_TEMPLATES = [
+  { key: "VOCAB_DRILLER", name: "單字達人", category: "學習類", method: "完成『單字集』研讀次數" },
+  { key: "AUDIO_LEARNER", name: "聽力小耳朵", category: "學習類", method: "點擊播放單字發音" },
+  { key: "SPEED_DEMON", name: "極速傳說", category: "技巧類", method: "挑戰區最快完成時間 (越小越好)" },
+  { key: "UNIT_MASTER", name: "單元制霸", category: "技巧類", method: "獲得 3★ 的關卡數" },
+  { key: "NEVER_GIVE_UP", name: "永不放棄", category: "鼓勵類", method: "重試/重新開始的次數" },
+  { key: "COMEBACK_KID", name: "逆轉勝", category: "鼓勵類", method: "分數比過去最佳提升 ≥3 分的次數" },
 ];
 
 function BadgePlanningPanel({
-  plans,
-  onAddPlan,
-  onRetirePlan,
-  onPassReflect,
-  maxPlans,
-  progress,
+  plans, progress, upsertBadgePlan, retireBadgePlan, reflectBadgePlan,
 }: {
-  plans: PlannedBadge[];
-  onAddPlan: (row: BadgePlanRow) => void;
-  onRetirePlan: (slot: number, reason: string, note: string) => void;
-  onPassReflect: (slot: number, reason: string, note: string) => void;
-  maxPlans: number;
-  progress: Progress;
+  plans: BadgePlanConfig[]; progress: Progress;
+  upsertBadgePlan: (plan: BadgePlanConfig) => void;
+  retireBadgePlan: (key: string, reason: string, note: string) => void;
+  reflectBadgePlan: (key: string, reason: string, note: string) => void;
 }) {
-  const [rows, setRows] = useState<BadgePlanRow[]>(() =>
-    SRL_BADGE_TEMPLATES.map((t) => ({
-      key: t.key,
-      name: t.name,
-      category: t.category,
-      method: t.method,
-      condition: t.condition,
-      confidence: 3,
-      justification: "",
-    })),
-  );
-
+  const [rows, setRows] = useState(() => SRL_BADGE_TEMPLATES.map((t) => ({ ...t, thresholds: { bronze: 0, silver: 0, gold: 0 }, confidence: 3, justification: "" })));
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
-  const [selectedKey, setSelectedKey] = useState<string>("");
+  const [step, setStep] = useState(0);
+  const [selectedKey, setSelectedKey] = useState("");
 
-  // 退休 modal
-  const [retireOpen, setRetireOpen] = useState(false);
-  const [retireSlot, setRetireSlot] = useState<number | null>(null);
-  const [retireReason, setRetireReason] = useState<string>("");
-  const [retireNote, setRetireNote] = useState<string>("");
+  const [retireOpen, setRetireOpen] = useState(false); const [retireKey, setRetireKey] = useState("");
+  const [retireReason, setRetireReason] = useState(""); const [retireNote, setRetireNote] = useState("");
+  
+  const [passOpen, setPassOpen] = useState(false); const [passKey, setPassKey] = useState("");
+  const [passReason, setPassReason] = useState(""); const [passNote, setPassNote] = useState("");
 
-  // ✅ 通關反思 modal
-  const [passOpen, setPassOpen] = useState(false);
-  const [passSlot, setPassSlot] = useState<number | null>(null);
-  const [passReason, setPassReason] = useState<string>("");
-  const [passNote, setPassNote] = useState<string>("");
+  const updateRow = (key: string, patch: any) => setRows(prev => prev.map(r => r.key === key ? { ...r, ...patch } : r));
+  const currentRow = useMemo(() => rows.find(r => r.key === selectedKey), [rows, selectedKey]);
 
-  const updateRowByKey = (key: string, patch: Partial<BadgePlanRow>) => {
-    setRows((prev) =>
-      prev.map((r) => (r.key === key ? { ...r, ...patch } : r)),
-    );
-  };
+  const safeTierOf = (key: string): BadgeTier => (progress.badges?.[key]?.tier as BadgeTier) || 0;
 
-  const currentRow = useMemo(
-    () => rows.find((r) => r.key === selectedKey),
-    [rows, selectedKey],
-  );
-
-  const safeTierOf = (key: string): BadgeTier => {
-    const rawTier = (progress.badges?.[key] as any)?.tier ?? 0;
-    const tierNum = typeof rawTier === "string" ? Number(rawTier) : rawTier;
-    return tierNum === 1 || tierNum === 2 || tierNum === 3 ? tierNum : 0;
-  };
-
-  const totalSteps = 5;
-  const stepLabel = (s: number) => {
-    if (s === 0) return "任務分析：選擇想挑戰的獎章任務";
-    if (s === 1) return "目標設定：你想怎麼設定取得條件？";
-    if (s === 2) return "自我監控：你有多大信心能達成？";
-    if (s === 3) return "自我反思：為什麼你想挑戰這個目標？";
-    return "命名：幫這個獎章取一個偉大的名字吧！";
-  };
-
-  const resetWizard = () => {
-    setStep(0);
-    setSelectedKey("");
+  // 🌟 精準的目標防呆邏輯
+  const historicalBest = currentRow ? getBadgeValue(currentRow.key, progress) : 0;
+  const isThresholdsValid = (key: string, t: CustomThresholds) => {
+    if (!t || t.bronze <= 0 || t.silver <= 0 || t.gold <= 0) return false;
+    if (key === "SPEED_DEMON") {
+      if (!(t.bronze > t.silver && t.silver > t.gold)) return false; // 需越來越快
+      if (historicalBest > 0 && t.bronze >= historicalBest) return false; // 必須打破歷史最佳
+    } else {
+      if (!(t.bronze < t.silver && t.silver < t.gold)) return false; // 一般要越來越多
+    }
+    return true;
   };
 
   const closeWizard = () => {
     setIsOpen(false);
-    resetWizard();
-  };
-
-  const openRetireForSlot = (slot: number) => {
-    const target = plans.find((p) => p.slot === slot);
-    setRetireSlot(slot);
-    setRetireReason(target?.retireReason ?? "");
-    setRetireNote(target?.retireNote ?? "");
-    setRetireOpen(true);
-  };
-
-  const openPassReflectForSlot = (slot: number) => {
-    const target = plans.find((p) => p.slot === slot);
-    setPassSlot(slot);
-    setPassReason(target?.passReflectReason ?? "");
-    setPassNote(target?.passReflectNote ?? "");
-    setPassOpen(true);
+    setStep(0);
+    setSelectedKey("");
   };
 
   const openWizard = () => {
-    if (plans.length >= maxPlans) return;
-
+    if (plans.length >= MAX_PLANS) return;
     const last = plans[plans.length - 1];
 
-    // ✅ 1) 上一枚未通關且未退休 → 必須先退休
+    // 若上一枚未通關且未放棄 -> 強制先放棄
     if (last && !last.retired && safeTierOf(last.key) === 0) {
-      openRetireForSlot(last.slot);
-      return;
+      setRetireKey(last.key); setRetireReason(""); setRetireNote(""); setRetireOpen(true); return;
     }
-
-    // ✅ 2) 上一枚已通關（銅牌就算）但尚未反思 → 必須先反思
-    if (last && !last.retired && safeTierOf(last.key) >= 1) {
-      const hasPassReflect =
-        (last.passReflectReason?.trim()?.length ?? 0) > 0 ||
-        (last.passReflectNote?.trim()?.length ?? 0) > 0;
-
-      if (!hasPassReflect) {
-        openPassReflectForSlot(last.slot);
-        return;
-      }
+    // 若上一枚已通關且未反思 -> 強制先反思
+    if (last && !last.retired && safeTierOf(last.key) >= 1 && !last.passReflectReason) {
+      setPassKey(last.key); setPassReason(""); setPassNote(""); setPassOpen(true); return;
     }
-
-    setIsOpen(true);
-    resetWizard();
+    setStep(0); setSelectedKey(""); setIsOpen(true);
   };
 
   const canNext = () => {
     if (step === 0) return !!selectedKey;
     if (!currentRow) return false;
-    if (step === 1) return currentRow.condition.trim().length > 0;
+    if (step === 1) return isThresholdsValid(currentRow.key, currentRow.thresholds);
     if (step === 2) return true;
     if (step === 3) return currentRow.justification.trim().length > 0;
     if (step === 4) return currentRow.name.trim().length > 0;
     return false;
   };
 
-  const next = () => {
-    if (!canNext()) return;
-    setStep((prev) => (prev < 4 ? ((prev + 1) as any) : prev));
-  };
-
-  const back = () => {
-    setStep((prev) => (prev > 0 ? ((prev - 1) as any) : prev));
-  };
-
   const finishOne = () => {
     if (!currentRow) return;
-    onAddPlan(currentRow);
+    upsertBadgePlan({
+      key: currentRow.key, name: currentRow.name, category: currentRow.category, method: currentRow.method,
+      thresholds: currentRow.thresholds, confidence: currentRow.confidence, justification: currentRow.justification,
+      updatedAt: new Date().toISOString()
+    });
     closeWizard();
   };
 
-  const plannedCount = plans.length;
-  const reachedLimit = plannedCount >= maxPlans;
-
-  const retireCanSubmit = retireReason.trim().length > 0;
-  const submitRetire = () => {
-    if (retireSlot == null) return;
-    if (!retireCanSubmit) return;
-    onRetirePlan(retireSlot, retireReason, retireNote);
-    setRetireOpen(false);
-    setRetireSlot(null);
-    setRetireReason("");
-    setRetireNote("");
-  };
-
-  const passCanSubmit = passReason.trim().length > 0;
-  const submitPassReflect = () => {
-    if (passSlot == null) return;
-    if (!passCanSubmit) return;
-    onPassReflect(passSlot, passReason, passNote);
-    setPassOpen(false);
-    setPassSlot(null);
-    setPassReason("");
-    setPassNote("");
-  };
-
-  // SRL 卡片（外觀跟原本 badge 卡一致）
-  const renderPlannedBadgeCard = (plan: PlannedBadge) => {
+  const renderPlannedBadgeCard = (plan: BadgePlanConfig, index: number) => {
     const key = plan.key;
-    const cfg = (BADGE_QR as any)[key];
-    if (!cfg) return null;
-
     const tier = safeTierOf(key);
     const style = TIER_STYLES[tier];
     const icon = TIER_ICONS[tier];
-    const tierName = TIER_NAMES[tier];
+    
+    const effectiveVal = getEffectiveProgress(key, progress); 
+    const isReverse = key === "SPEED_DEMON";
 
-    const [bronze, silver, gold] = cfg.thresholds as [number, number, number];
-    const currentVal = getBadgeValue(key, progress);
-    const isReverse = !!cfg.reverse;
-
-    let nextTarget = 0;
-    let nextTierLabel = "";
-    if (tier === 0) {
-      nextTarget = bronze;
-      nextTierLabel = "銅級";
-    } else if (tier === 1) {
-      nextTarget = silver;
-      nextTierLabel = "銀級";
-    } else if (tier === 2) {
-      nextTarget = gold;
-      nextTierLabel = "金級";
-    }
+    const { bronze, silver, gold } = plan.thresholds;
+    let nextTarget = tier === 0 ? bronze : tier === 1 ? silver : tier === 2 ? gold : 0;
+    let nextTierLabel = tier === 0 ? "銅級" : tier === 1 ? "銀級" : tier === 2 ? "金級" : "";
 
     let diffText = "";
     if (tier === 3) diffText = "已達最高等級！";
     else if (!isReverse) {
-      const remain = Math.max(0, nextTarget - currentVal);
-      diffText =
-        remain === 0
-          ? `已達 ${nextTierLabel} 門檻`
-          : `還差 ${remain} 才能升到 ${nextTierLabel}`;
+      const remain = Math.max(0, nextTarget - effectiveVal);
+      diffText = remain === 0 ? `已達 ${nextTierLabel} 門檻` : `還差 ${remain} 次升級`;
     } else {
-      if (currentVal === 0) diffText = "尚未有紀錄，先完成一次挑戰看看。";
-      else if (currentVal <= nextTarget)
-        diffText = `已達 ${nextTierLabel} 門檻`;
-      else
-        diffText = `再快約 ${Math.round(currentVal - nextTarget)} 秒，可達 ${nextTierLabel}`;
+      if (effectiveVal === 0) diffText = "設定後尚未有新紀錄";
+      else if (effectiveVal <= nextTarget) diffText = `已達 ${nextTierLabel} 門檻`;
+      else diffText = `再快 ${Math.round(effectiveVal - nextTarget)} 秒升級`;
     }
 
     let ratio = 0;
-    if (!isReverse) ratio = gold > 0 ? Math.min(currentVal / gold, 1) : 0;
-    else {
-      if (currentVal > 0)
-        ratio = currentVal <= gold ? 1 : Math.min(bronze / currentVal, 1);
-      else ratio = 0;
-    }
+    if (!isReverse) ratio = gold > 0 ? Math.min(effectiveVal / gold, 1) : 0;
+    else ratio = effectiveVal > 0 ? (effectiveVal <= gold ? 1 : Math.min(bronze / effectiveVal, 1)) : 0;
 
     const canRetire = !plan.retired && tier === 0;
-
-    const needsPassReflect =
-      !plan.retired &&
-      tier >= 1 &&
-      (plan.passReflectReason?.trim()?.length ?? 0) === 0 &&
-      (plan.passReflectNote?.trim()?.length ?? 0) === 0;
+    const needsReflect = !plan.retired && tier >= 1 && !plan.passReflectReason;
 
     return (
-      <div
-        key={plan.slot}
-        className={[
-          "relative p-4 rounded-2xl border transition",
-          style,
-          plan.retired ? "opacity-70" : "",
-        ].join(" ")}
-      >
-        {/* slot / status */}
-        <div className="absolute top-3 left-3 flex gap-2 items-center">
-          <span className="text-[11px] font-mono font-semibold bg-black/10 px-2 py-1 rounded-full">
-            第 {plan.slot} 枚
-          </span>
-          {plan.retired && (
-            <span className="text-[11px] font-semibold bg-black/10 px-2 py-1 rounded-full">
-              已退休
-            </span>
-          )}
-          {!plan.retired && tier > 0 && (
-            <span className="text-[11px] font-semibold bg-black/10 px-2 py-1 rounded-full">
-              已通關
-            </span>
-          )}
+      <div key={key} className={`relative p-4 rounded-2xl border transition ${style} ${plan.retired ? "opacity-60" : ""}`}>
+        <div className="absolute top-3 left-3">
+          <span className="text-[11px] font-mono font-semibold bg-black/10 px-2 py-1 rounded-full">第 {index + 1} 枚</span>
+          {plan.retired && <span className="ml-1 text-[11px] font-semibold bg-red-100 text-red-800 px-2 py-1 rounded-full">已退休</span>}
+          {!plan.retired && tier > 0 && <span className="ml-1 text-[11px] font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">已達標</span>}
         </div>
-
-        {/* top-right buttons */}
         <div className="absolute top-3 right-3 flex gap-2 z-20">
-          {/* ✅ 反思（通關後才會亮，且尚未填寫才亮） */}
-          <button
-            type="button"
-            onClick={() => openPassReflectForSlot(plan.slot)}
-            disabled={!needsPassReflect}
-            className={[
-              "px-3 py-1 rounded-full text-xs font-semibold border transition",
-              needsPassReflect
-                ? "border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50"
-                : "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed",
-            ].join(" ")}
-            title={
-              needsPassReflect
-                ? "為這枚已通關的獎章留下反思"
-                : "已填過反思或尚未通關"
-            }
-          >
-            反思
-          </button>
-
-          {/* 退休 */}
-          <button
-            type="button"
-            onClick={() => {
-              console.log("RETIRE CLICK", plan.slot, {
-                canRetire,
-                tier,
-                retired: plan.retired,
-              });
-              openRetireForSlot(plan.slot);
-            }}
-            disabled={!canRetire}
-            className={[
-              "px-3 py-1 rounded-full text-xs font-semibold border transition",
-              canRetire
-                ? "border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50"
-                : "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed",
-            ].join(" ")}
-            title={canRetire ? "退休這枚獎章" : "通關後或已退休不可再退休"}
-          >
-            退休
-          </button>
+          <button onClick={() => { setPassKey(key); setPassOpen(true); }} disabled={!needsReflect} className={`px-3 py-1 rounded-full text-xs font-semibold border ${needsReflect ? "border-black bg-white text-black hover:bg-neutral-50" : "opacity-30 cursor-not-allowed"}`}>反思</button>
+          <button onClick={() => { setRetireKey(key); setRetireOpen(true); }} disabled={!canRetire} className={`px-3 py-1 rounded-full text-xs font-semibold border ${canRetire ? "border-black bg-white text-black hover:bg-neutral-50" : "opacity-30 cursor-not-allowed"}`}>退休</button>
         </div>
-
-        {/* Icon */}
-        <div className="text-4xl mb-2 text-center drop-shadow-sm">{icon}</div>
-
-        {/* Name */}
-        <div className="font-extrabold text-center text-base mb-1 text-neutral-900">
-          {plan.name}
+        <div className="text-4xl mb-2 mt-6 text-center drop-shadow-sm">{icon}</div>
+        <div className="font-extrabold text-center text-base mb-1">{plan.name}</div>
+        <div className="mt-3 w-full rounded-xl border border-black/10 bg-white/50 p-2 text-xs text-neutral-800 leading-snug">
+          <div><span className="font-semibold">挑戰目標：</span>銅 {bronze} | 銀 {silver} | 金 {gold}</div>
+          <div className="mt-1"><span className="font-semibold">理由：</span>{plan.justification}</div>
+          {(plan.passReflectReason) && !plan.retired && (
+            <div className="mt-2 pt-2 border-t border-black/10"><div><span className="font-semibold text-green-700">通關反思：</span>{plan.passReflectReason}</div>{plan.passReflectNote && <div className="mt-1 text-neutral-600">{plan.passReflectNote}</div>}</div>
+          )}
+          {plan.retired && (
+            <div className="mt-2 pt-2 border-t border-black/10"><div><span className="font-semibold text-red-700">退休原因：</span>{plan.retireReason}</div>{plan.retireNote && <div className="mt-1 text-neutral-600">{plan.retireNote}</div>}</div>
+          )}
         </div>
-
-        {/* Desc + planned info */}
-        <div className="text-sm text-center text-neutral-800 min-h-[3em] flex flex-col items-center justify-center leading-snug">
-          <div>{(BADGE_META as any)[key]?.desc ?? ""}</div>
-
-          <div className="mt-2 w-full rounded-xl border border-black/10 bg-white/50 p-2 text-xs text-neutral-800 leading-snug">
-            <div>
-              <span className="font-semibold">自訂條件：</span>
-              {plan.condition}
-            </div>
-            <div className="mt-1">
-              <span className="font-semibold">理由：</span>
-              {plan.justification || "—"}
-            </div>
-
-            {/* ✅ 通關反思顯示 */}
-            {(plan.passReflectReason || plan.passReflectNote) &&
-              !plan.retired &&
-              tier >= 1 && (
-                <div className="mt-2 pt-2 border-t border-black/10">
-                  <div>
-                    <span className="font-semibold">通關反思：</span>
-                    {plan.passReflectReason || "—"}
-                  </div>
-                  <div className="mt-1">
-                    <span className="font-semibold">補充：</span>
-                    {plan.passReflectNote || "—"}
-                  </div>
-                </div>
-              )}
-
-            {/* 退休顯示 */}
-            {plan.retired && (
-              <div className="mt-2 pt-2 border-t border-black/10">
-                <div>
-                  <span className="font-semibold">退休原因：</span>
-                  {plan.retireReason || "—"}
-                </div>
-                <div className="mt-1">
-                  <span className="font-semibold">說明：</span>
-                  {plan.retireNote || "—"}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Progress bar */}
         <div className="mt-3">
-          <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all"
-              style={{ width: `${Math.round(ratio * 100)}%` }}
-            />
+          <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all" style={{ width: `${Math.round(ratio * 100)}%` }} /></div>
+          <div className="mt-2 text-sm font-semibold">{diffText}</div>
+          <div className="mt-1 text-xs text-neutral-700 font-mono font-bold text-indigo-800">
+            有效挑戰進度：{effectiveVal > 0 ? effectiveVal : "0"} {isReverse ? '秒' : '次'}
           </div>
-
-          <div className="mt-2 text-sm font-semibold text-neutral-900">
-            {diffText}
-          </div>
-
-          <div className="mt-1 text-xs text-neutral-700 leading-snug">
-            {!isReverse ? (
-              <>
-                目前：
-                <span className="font-mono font-semibold text-neutral-900">
-                  {currentVal}
-                </span>
-              </>
-            ) : (
-              <>
-                最佳紀錄：
-                <span className="font-mono font-semibold text-neutral-900">
-                  {currentVal > 0 ? `${currentVal} 秒` : "—"}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-3 pt-2 border-t border-black/10 flex justify-between items-center text-xs">
-          <span className="font-mono font-semibold bg-black/10 px-2 py-1 rounded">
-            {tierName}
-          </span>
-          <span className="text-neutral-800 text-right leading-tight font-medium">
-            目標：
-            <br />銅 {bronze}／銀 {silver}／金 {gold}
-          </span>
         </div>
       </div>
     );
@@ -600,672 +194,250 @@ function BadgePlanningPanel({
 
   return (
     <Card className="p-5">
-      <SectionTitle
-        title="獎章規劃（SRL）"
-        desc="一步一步引導式填寫：先選任務 → 設定條件 → 評估信心 → 說明理由 → 命名。此階段僅 UI，不會儲存。"
-      />
-
-      <div className="mt-3 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-        <div className="text-sm text-neutral-700">
-          已規劃：
-          <span className="font-semibold text-neutral-900">
-            {plannedCount}
-          </span>{" "}
-          / {maxPlans}
-        </div>
-
-        <button
-          type="button"
-          onClick={openWizard}
-          disabled={reachedLimit}
-          className={[
-            "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-            reachedLimit
-              ? "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed"
-              : "border-neutral-900 bg-neutral-900 text-white hover:opacity-90",
-          ].join(" ")}
-        >
-          開始規劃一枚獎章
-        </button>
+      <SectionTitle title="🎯 獎章規劃面板 (SRL)" desc="決定目標、監控進度、反思學習，成為自己的學習主人！" />
+      <div className="mt-3 flex justify-between items-center">
+        <div className="text-sm text-neutral-700">已規劃：<span className="font-semibold">{plans.length}</span> / {MAX_PLANS}</div>
+        <button onClick={openWizard} disabled={plans.length >= MAX_PLANS} className={`px-4 py-2 rounded-2xl text-sm font-medium border transition ${plans.length >= MAX_PLANS ? "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed" : "bg-neutral-900 text-white hover:bg-neutral-800"}`}>新增一個挑戰目標</button>
       </div>
 
-      {/* 規劃完成的 SRL badge：放在 SRL 大框內 */}
-      {plans.length > 0 && (
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {plans.map(renderPlannedBadgeCard)}
-        </div>
-      )}
+      {plans.length > 0 && <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{plans.map((p, i) => renderPlannedBadgeCard(p, i))}</div>}
 
-      {/* Wizard Modal */}
+      {/* 🌟 設定目標 Wizard Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={closeWizard} />
-          <div className="relative w-[92vw] max-w-2xl">
-            <Card className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-xs text-neutral-500">
-                    步驟 {step + 1} / {totalSteps}
-                  </div>
-                  <div className="text-xl font-extrabold text-neutral-900 mt-1">
-                    {stepLabel(step)}
-                  </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl p-6 shadow-xl">
+            {/* ✅ 絕對定位的關閉按鈕 */}
+            <button onClick={closeWizard} className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-full transition" title="關閉">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <h2 className="text-xl font-bold mb-4">設定目標 (步驟 {step + 1} / 5)</h2>
+            <div className="min-h-[200px] mt-2">
+              {step === 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {rows.map((r) => {
+                    // 🌟 防呆：尋找這枚獎章是否已經被設定過且尚未退休
+                    const existingPlans = plans.filter(p => p.key === r.key);
+                    const lastPlan = existingPlans[existingPlans.length - 1];
+                    
+                    let statusText = "";
+                    let isDisabled = false;
+
+                    if (lastPlan && !lastPlan.retired) {
+                      const tier = safeTierOf(r.key);
+                      if (tier > 0) {
+                        statusText = "已通關";
+                        isDisabled = true; // 已通關不允許再選
+                      } else {
+                        statusText = "進行中";
+                        isDisabled = true; // 進行中不允許再選
+                      }
+                    }
+
+                    return (
+                      <button 
+                        key={r.key} 
+                        onClick={() => setSelectedKey(r.key)} 
+                        disabled={isDisabled}
+                        className={`p-3 border rounded-xl text-left relative transition-all 
+                          ${selectedKey === r.key ? 'bg-neutral-900 text-white border-neutral-900 shadow-md' : 'hover:bg-neutral-50 bg-white'} 
+                          ${isDisabled ? 'opacity-50 cursor-not-allowed bg-neutral-100 hover:bg-neutral-100 grayscale' : ''}`}
+                      >
+                        <div className="font-bold text-sm flex justify-between items-center">
+                          {r.name}
+                          {statusText && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-normal ${selectedKey === r.key ? 'bg-white/20' : 'bg-black/10 text-neutral-800'}`}>
+                              {statusText}
+                            </span>
+                          )}
+                        </div>
+                        <div className={`text-xs mt-1 ${selectedKey === r.key ? 'text-neutral-300' : 'opacity-80'}`}>{r.method}</div>
+                      </button>
+                    )
+                  })}
                 </div>
-                <button
-                  type="button"
-                  onClick={closeWizard}
-                  className="px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                {Array.from({ length: totalSteps }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={[
-                      "h-2 flex-1 rounded-full",
-                      i <= step ? "bg-neutral-900" : "bg-neutral-200",
-                    ].join(" ")}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-5 space-y-4">
-                {step === 0 && (
-                  <div className="space-y-3">
-                    <div className="text-sm text-neutral-700">
-                      請選擇你想挑戰的獎章任務～
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {rows.map((r) => {
-                        const active = r.key === selectedKey;
-                        const usedBefore = plans.some((p) => p.key === r.key);
-                        return (
-                          <button
-                            key={r.key}
-                            type="button"
-                            onClick={() => setSelectedKey(r.key)}
-                            className={[
-                              "text-left rounded-2xl border p-3 transition",
-                              active
-                                ? "border-neutral-900 bg-neutral-900 text-white"
-                                : "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900",
-                            ].join(" ")}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="font-semibold">
-                                {r.name}
-                                {usedBefore ? "（已規劃過）" : ""}
-                              </div>
-                              <span
-                                className={[
-                                  "text-[11px] font-mono px-2 py-1 rounded-full border",
-                                  active
-                                    ? "border-white/30 bg-white/10 text-white"
-                                    : "border-neutral-200 bg-neutral-50 text-neutral-700",
-                                ].join(" ")}
-                              >
-                                {r.key}
-                              </span>
-                            </div>
-                            <div
-                              className={[
-                                "mt-1 text-xs",
-                                active ? "text-white/80" : "text-neutral-600",
-                              ].join(" ")}
-                            >
-                              類型：{r.category}
-                            </div>
-                            <div
-                              className={[
-                                "mt-2 text-xs leading-snug",
-                                active ? "text-white/80" : "text-neutral-700",
-                              ].join(" ")}
-                            >
-                              {r.method}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {step === 1 && currentRow && (
-                  <div className="space-y-3">
-                    <div className="text-sm text-neutral-700">
-                      你會想怎麼設定這個獎章的取得條件～
-                    </div>
-
-                    <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-700 leading-relaxed">
-                      <div className="font-semibold text-neutral-900 mb-1">
-                        系統指標（固定）
-                      </div>
-                      {currentRow.method}
-                    </div>
-
-                    <label className="block text-xs text-neutral-600">
-                      取得條件（自訂）
-                    </label>
-                    <input
-                      value={currentRow.condition}
-                      onChange={(e) =>
-                        updateRowByKey(currentRow.key, {
-                          condition: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                      placeholder="例如：每天至少 10 次；或 銅 3｜銀 10｜金 30…"
-                    />
-                  </div>
-                )}
-
-                {step === 2 && currentRow && (
-                  <div className="space-y-3">
-                    <div className="text-sm text-neutral-700">
-                      你有多大信心能達成這個目標呢？
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {[1, 2, 3, 4, 5].map((n) => {
-                        const active = currentRow.confidence === n;
-                        return (
-                          <button
-                            key={n}
-                            type="button"
-                            onClick={() =>
-                              updateRowByKey(currentRow.key, {
-                                confidence: n as 1 | 2 | 3 | 4 | 5,
-                              })
-                            }
-                            className={[
-                              "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-                              active
-                                ? "border-neutral-900 bg-neutral-900 text-white"
-                                : "border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900",
-                            ].join(" ")}
-                          >
-                            {n} 分
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && currentRow && (
-                  <div className="space-y-3">
-                    <div className="text-sm text-neutral-700">
-                      為什麼這次會想選擇這個獎章呢？
-                    </div>
-
-                    <label className="block text-xs text-neutral-600">
-                      自我挑戰理由（Justification）
-                    </label>
-                    <input
-                      value={currentRow.justification}
-                      onChange={(e) =>
-                        updateRowByKey(currentRow.key, {
-                          justification: e.target.value,
-                        })
-                      }
-                      className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                      placeholder="一句話簡述：為什麼選這個目標？"
-                    />
-                  </div>
-                )}
-
-                {step === 4 && currentRow && (
-                  <div className="space-y-3">
-                    <div className="text-sm text-neutral-700">
-                      最後！請幫這個獎章取一個偉大的名字吧！
-                    </div>
-
-                    <label className="block text-xs text-neutral-600">
-                      獎章名稱（可自訂）
-                    </label>
-                    <input
-                      value={currentRow.name}
-                      onChange={(e) =>
-                        updateRowByKey(currentRow.key, { name: e.target.value })
-                      }
-                      className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                      placeholder="輸入你的獎章名稱"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={back}
-                  disabled={step === 0}
-                  className={[
-                    "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-                    step === 0
-                      ? "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed"
-                      : "border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50",
-                  ].join(" ")}
-                >
-                  上一步
-                </button>
-
-                <div className="flex gap-2">
-                  {step < 4 ? (
-                    <button
-                      type="button"
-                      onClick={next}
-                      disabled={!canNext()}
-                      className={[
-                        "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-                        canNext()
-                          ? "border-neutral-900 bg-neutral-900 text-white hover:opacity-90"
-                          : "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed",
-                      ].join(" ")}
-                    >
-                      下一步
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={finishOne}
-                      disabled={!canNext()}
-                      className={[
-                        "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-                        canNext()
-                          ? "border-neutral-900 bg-neutral-900 text-white hover:opacity-90"
-                          : "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed",
-                      ].join(" ")}
-                    >
-                      完成這枚獎章的規劃
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-3 text-xs text-neutral-500">
-                ※ UI 示意：不會寫入 Supabase、不會真正啟用獎章。
-              </div>
-            </Card>
+              )}
+              {step === 1 && currentRow && (
+                 <div className="space-y-4">
+                   <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-900">
+                     <strong>歷史提示：</strong> 
+                     {currentRow.key === "SPEED_DEMON" 
+                       ? (historicalBest > 0 ? `你目前的最佳紀錄是 ${historicalBest} 秒，挑戰自己吧！` : "你還沒玩過挑戰區，先預設一個秒數目標吧！")
+                       : `這個任務會從你按下設定的這一刻「從 0 開始」累積計算喔！`}
+                   </div>
+                   <p className="text-sm font-bold">請輸入你要挑戰的數字 (例如：我要再多做 15 次)：</p>
+                   <div className="grid grid-cols-3 gap-3">
+                     <div><label className="block text-xs text-amber-700 font-bold mb-1">銅級</label><input type="number" value={currentRow.thresholds.bronze || ""} onChange={e => updateRow(currentRow.key, { thresholds: { ...currentRow.thresholds, bronze: Number(e.target.value) }})} className="border p-2 w-full rounded-xl" /></div>
+                     <div><label className="block text-xs text-slate-500 font-bold mb-1">銀級</label><input type="number" value={currentRow.thresholds.silver || ""} onChange={e => updateRow(currentRow.key, { thresholds: { ...currentRow.thresholds, silver: Number(e.target.value) }})} className="border p-2 w-full rounded-xl" /></div>
+                     <div><label className="block text-xs text-yellow-600 font-bold mb-1">金級</label><input type="number" value={currentRow.thresholds.gold || ""} onChange={e => updateRow(currentRow.key, { thresholds: { ...currentRow.thresholds, gold: Number(e.target.value) }})} className="border p-2 w-full rounded-xl" /></div>
+                   </div>
+                   {!isThresholdsValid(currentRow.key, currentRow.thresholds) && <p className="text-red-500 text-xs font-bold">⚠️ 數值不合理！(極速傳說秒數須遞減且小於歷史最佳，其他需遞增且大於0)</p>}
+                 </div>
+              )}
+              {step === 2 && currentRow && (
+                <div><p className="font-bold mb-3">你有多大的信心能達成呢？(1-5分)</p>
+                <div className="flex gap-2">{[1,2,3,4,5].map(n => <button key={n} onClick={() => updateRow(currentRow.key, {confidence: n})} className={`px-5 py-3 border rounded-xl font-bold transition ${currentRow.confidence === n ? 'bg-neutral-900 text-white' : 'hover:bg-neutral-50 bg-white'}`}>{n}</button>)}</div></div>
+              )}
+              {step === 3 && currentRow && (
+                <div><p className="font-bold mb-3">為什麼想選這個目標？</p><textarea rows={4} className="border p-3 w-full rounded-xl outline-none focus:ring-2 focus:ring-neutral-400" placeholder="一句話記錄下來，通關時可以回顧..." value={currentRow.justification} onChange={e => updateRow(currentRow.key, {justification: e.target.value})} /></div>
+              )}
+              {step === 4 && currentRow && (
+                <div><p className="font-bold mb-3">幫你的挑戰取個響亮的名字！</p><input className="border p-3 w-full rounded-xl outline-none focus:ring-2 focus:ring-neutral-400" placeholder="例如：單字破壞者" value={currentRow.name} onChange={e => updateRow(currentRow.key, {name: e.target.value})} /></div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-between">
+              <button onClick={() => setStep(s => Math.max(0, s-1))} disabled={step === 0} className="px-4 py-2 border rounded-xl disabled:opacity-30 hover:bg-neutral-50 transition">上一步</button>
+              {step < 4 ? <button onClick={() => setStep(s => s+1)} disabled={!canNext()} className="px-4 py-2 bg-neutral-900 text-white rounded-xl disabled:opacity-30 hover:bg-neutral-800 transition">下一步</button> : <button onClick={finishOne} disabled={!canNext()} className="px-6 py-2 bg-indigo-600 font-bold text-white rounded-xl shadow-lg disabled:opacity-30 hover:bg-indigo-700 transition">正式立下目標！</button>}
+            </div>
           </div>
         </div>
       )}
 
-      {/* 退休 Modal */}
+{/* 🌟 退休 Modal */}
       {retireOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setRetireOpen(false)}
-          />
-          <div className="relative w-[92vw] max-w-xl">
-            <Card className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-xl font-extrabold text-neutral-900">
-                    退休這枚獎章
-                  </div>
-                  <div className="text-sm text-neutral-600 mt-1">
-                    若上一枚還沒通關，開始下一次規劃前需要先退休，並留下反思回饋。
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setRetireOpen(false)}
-                  className="px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
-                >
-                  ✕
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+           <div className="relative bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
+             <button onClick={()=>setRetireOpen(false)} className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-full transition" title="關閉">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+             </button>
+             <h3 className="font-bold text-lg mb-1 text-red-700">放棄/退休這枚獎章</h3>
+             <p className="text-sm text-neutral-600 mb-4">誠實面對自己也是一種學習，請記錄下放棄的原因供後續研究分析。</p>
+             <select value={retireReason} onChange={e=>setRetireReason(e.target.value)} className="w-full border p-3 mb-3 rounded-xl bg-neutral-50 outline-none focus:ring-2 focus:ring-red-200">
+               <option value="">請選擇主要原因...</option>
+               <option value="目標設太高">目標設太高</option>
+               <option value="時間/策略不足">時間/策略不足</option>
+               <option value="失去動機/不適合">失去動機/不適合</option>
+               <option value="其他">其他</option>
+             </select>
+             
+             {/* 🌟 強制填寫區塊 */}
+             <textarea 
+               value={retireNote} 
+               onChange={e=>setRetireNote(e.target.value)} 
+               className={`w-full border p-3 mb-1 rounded-xl bg-neutral-50 outline-none focus:ring-2 ${retireNote.trim().length >= 8 ? 'focus:ring-green-400 border-green-200' : 'focus:ring-red-200'}`} 
+               placeholder="補充說明 (例如：我原本以為每天10次很容易，但...)" 
+               rows={3}
+             />
+             <div className={`text-xs text-right mb-2 font-bold ${retireNote.trim().length >= 8 ? 'text-green-600' : 'text-red-500'}`}>
+               {retireNote.trim().length >= 8 ? '✅ 字數達標' : `⚠️ 必須填寫至少 8 個字 (目前：${retireNote.trim().length} 字)`}
+             </div>
 
-              <div className="mt-4 space-y-3">
-                <label className="block text-xs text-neutral-600">
-                  為什麼沒有達成？（原因）
-                </label>
-                <select
-                  value={retireReason}
-                  onChange={(e) => setRetireReason(e.target.value)}
-                  className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                >
-                  <option value="">請選擇…</option>
-                  <option value="目標設太高">目標設太高</option>
-                  <option value="時間/策略不足">時間/策略不足</option>
-                  <option value="能力不足/還沒準備好">
-                    能力不足/還沒準備好
-                  </option>
-                  <option value="失去動機/不適合">失去動機/不適合</option>
-                  <option value="其他">其他</option>
-                </select>
-
-                <label className="block text-xs text-neutral-600">
-                  補充說明（可打字）
-                </label>
-                <textarea
-                  value={retireNote}
-                  onChange={(e) => setRetireNote(e.target.value)}
-                  rows={4}
-                  className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                  placeholder="例如：我把條件設太高，導致中途放棄；下次我會把每日次數調低…"
-                />
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setRetireOpen(false)}
-                    className="px-4 py-2 rounded-2xl text-sm font-medium border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="button"
-                    onClick={submitRetire}
-                    disabled={!retireCanSubmit}
-                    className={[
-                      "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-                      retireCanSubmit
-                        ? "border-neutral-900 bg-neutral-900 text-white hover:opacity-90"
-                        : "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed",
-                    ].join(" ")}
-                  >
-                    確認退休
-                  </button>
-                </div>
-
-                <div className="text-xs text-neutral-500">
-                  ※ UI 示意：目前只在前端 state 記錄，不會寫入資料庫。
-                </div>
-              </div>
-            </Card>
-          </div>
+             <div className="flex justify-end gap-2 mt-4">
+               <button onClick={()=>setRetireOpen(false)} className="px-4 py-2 border rounded-xl hover:bg-neutral-50">取消</button>
+               {/* 🌟 雙重鎖定：沒選原因 或 字數不到 8 字，按鈕就反灰 */}
+               <button 
+                 disabled={!retireReason || retireNote.trim().length < 8} 
+                 onClick={()=>{retireBadgePlan(retireKey, retireReason, retireNote); setRetireOpen(false);}} 
+                 className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-red-700 transition"
+               >
+                 確定放棄寫入
+               </button>
+             </div>
+           </div>
         </div>
       )}
 
-      {/* ✅ 通關反思 Modal（銅牌就算通關） */}
+      {/* 🌟 反思 Modal */}
       {passOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setPassOpen(false)}
-          />
-          <div className="relative w-[92vw] max-w-xl">
-            <Card className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-xl font-extrabold text-neutral-900">
-                    通關反思
-                  </div>
-                  <div className="text-sm text-neutral-600 mt-1">
-                    在開始下一枚獎章規劃前，先回顧一下這枚「已通關」的獎章：你是怎麼做到的？
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setPassOpen(false)}
-                  className="px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
-                >
-                  ✕
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+           <div className="relative bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
+             <button onClick={()=>setPassOpen(false)} className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-full transition" title="關閉">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+             </button>
+             <h3 className="font-bold text-lg mb-1 text-green-700">恭喜通關！進行反思</h3>
+             <p className="text-sm text-neutral-600 mb-4">你成功達成自己設定的目標了！回顧一下你是怎麼做到的？</p>
+             <select value={passReason} onChange={e=>setPassReason(e.target.value)} className="w-full border p-3 mb-3 rounded-xl bg-neutral-50 outline-none focus:ring-2 focus:ring-green-200">
+               <option value="">請選擇主要原因...</option>
+               <option value="目標設定剛好">目標設定剛好</option>
+               <option value="策略有效">策略有效（例如拆分任務）</option>
+               <option value="其實偏簡單">其實偏簡單（下次可加強）</option>
+               <option value="其他">其他</option>
+             </select>
 
-              <div className="mt-4 space-y-3">
-                <label className="block text-xs text-neutral-600">
-                  你覺得為什麼能達成？（原因）
-                </label>
-                <select
-                  value={passReason}
-                  onChange={(e) => setPassReason(e.target.value)}
-                  className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                >
-                  <option value="">請選擇…</option>
-                  <option value="目標設定剛好">目標設定剛好</option>
-                  <option value="策略有效（例如拆分任務/固定時段）">
-                    策略有效（例如拆分任務/固定時段）
-                  </option>
-                  <option value="動機很強/很投入">動機很強/很投入</option>
-                  <option value="其實偏簡單（下次可加強）">
-                    其實偏簡單（下次可加強）
-                  </option>
-                  <option value="其他">其他</option>
-                </select>
+             {/* 🌟 強制填寫區塊 */}
+             <textarea 
+               value={passNote} 
+               onChange={e=>setPassNote(e.target.value)} 
+               className={`w-full border p-3 mb-1 rounded-xl bg-neutral-50 outline-none focus:ring-2 ${passNote.trim().length >= 8 ? 'focus:ring-green-400 border-green-200' : 'focus:ring-green-200'}`} 
+               placeholder="補充說明 (例如：我每天固定睡前玩兩場，效果很好...)" 
+               rows={3}
+             />
+             <div className={`text-xs text-right mb-2 font-bold ${passNote.trim().length >= 8 ? 'text-green-600' : 'text-red-500'}`}>
+               {passNote.trim().length >= 8 ? '✅ 字數達標' : `⚠️ 必須分享至少 8 個字 (目前：${passNote.trim().length} 字)`}
+             </div>
 
-                <label className="block text-xs text-neutral-600">
-                  補充說明（可打字）
-                </label>
-                <textarea
-                  value={passNote}
-                  onChange={(e) => setPassNote(e.target.value)}
-                  rows={4}
-                  className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400"
-                  placeholder="例如：我把目標拆成每天 10 次，並固定在通勤時間做，所以很穩定達成…"
-                />
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setPassOpen(false)}
-                    className="px-4 py-2 rounded-2xl text-sm font-medium border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="button"
-                    onClick={submitPassReflect}
-                    disabled={!passCanSubmit}
-                    className={[
-                      "px-4 py-2 rounded-2xl text-sm font-medium border transition",
-                      passCanSubmit
-                        ? "border-neutral-900 bg-neutral-900 text-white hover:opacity-90"
-                        : "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed",
-                    ].join(" ")}
-                  >
-                    確認反思並繼續
-                  </button>
-                </div>
-
-                <div className="text-xs text-neutral-500">
-                  ※ UI 示意：目前只在前端 state 記錄，不會寫入資料庫。
-                </div>
-              </div>
-            </Card>
-          </div>
+             <div className="flex justify-end gap-2 mt-4">
+               <button onClick={()=>setPassOpen(false)} className="px-4 py-2 border rounded-xl hover:bg-neutral-50">取消</button>
+               {/* 🌟 雙重鎖定：沒選原因 或 字數不到 8 字，按鈕就反灰 */}
+               <button 
+                 disabled={!passReason || passNote.trim().length < 8} 
+                 onClick={()=>{reflectBadgePlan(passKey, passReason, passNote); setPassOpen(false);}} 
+                 className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-green-700 transition"
+               >
+                 記錄反思寫入
+               </button>
+             </div>
+           </div>
         </div>
       )}
     </Card>
   );
 }
 
-export default function BadgesView({ progress }: { progress: Progress }) {
-  const categories: Record<
-    "participation" | "skill" | "encouragement",
-    string
-  > = {
-    participation: "參與類 Participation",
-    skill: "技巧類 Skill",
-    encouragement: "鼓勵類 Encouragement",
-  };
-
-  const [plans, setPlans] = useState<PlannedBadge[]>([]);
-
-  const onAddPlan = (row: BadgePlanRow) => {
-    setPlans((prev) => {
-      const slot = prev.length + 1;
-      if (slot > MAX_PLANS) return prev;
-      return [...prev, { ...row, slot, retired: false }];
-    });
-  };
-
-  const onRetirePlan = (slot: number, reason: string, note: string) => {
-    setPlans((prev) =>
-      prev.map((p) =>
-        p.slot === slot
-          ? { ...p, retired: true, retireReason: reason, retireNote: note }
-          : p,
-      ),
-    );
-  };
-
-  const onPassReflect = (slot: number, reason: string, note: string) => {
-    setPlans((prev) =>
-      prev.map((p) =>
-        p.slot === slot
-          ? { ...p, passReflectReason: reason, passReflectNote: note }
-          : p,
-      ),
-    );
-  };
+export default function BadgesView({
+  progress, upsertBadgePlan, retireBadgePlan, reflectBadgePlan
+}: {
+  progress: Progress; upsertBadgePlan: any; retireBadgePlan: any; reflectBadgePlan: any;
+}) {
+  const plans = Object.values(progress.badgePlans ?? {}); 
+  const categories: Record<"participation" | "skill" | "encouragement", string> = { participation: "參與類 Participation", skill: "技巧類 Skill", encouragement: "鼓勵類 Encouragement" };
 
   return (
     <div className="space-y-8 pb-10">
-      <BadgePlanningPanel
-        plans={plans}
-        onAddPlan={onAddPlan}
-        onRetirePlan={onRetirePlan}
-        onPassReflect={onPassReflect}
-        maxPlans={MAX_PLANS}
-        progress={progress}
-      />
+      
+      {/* 🌟 實驗組永遠顯示 SRL 面板 */}
+      <BadgePlanningPanel plans={plans} progress={progress} upsertBadgePlan={upsertBadgePlan} retireBadgePlan={retireBadgePlan} reflectBadgePlan={reflectBadgePlan} />
 
+      {/* 下方：傳統獎章牆 (永遠排除 6 枚 SRL 獎章) */}
       {(["participation", "skill", "encouragement"] as const).map((cat) => (
         <section key={cat} className="space-y-3">
-          <h3 className="text-2xl font-extrabold text-neutral-900 border-l-4 border-neutral-900 pl-3">
-            {categories[cat]}
-          </h3>
-
+          <h3 className="text-2xl font-extrabold text-neutral-900 border-l-4 border-neutral-900 pl-3">{categories[cat]}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {Object.entries(BADGE_QR)
               .filter(([, cfg]) => cfg.type === cat)
-              // ✅ SRL 6 枚：永遠不出現在下面牆（只在上面 SRL 大框顯示）
-              .filter(
-                ([key]) =>
-                  !(SRL_HIDDEN_KEYS as readonly string[]).includes(key),
-              )
+              .filter(([key]) => !(SRL_HIDDEN_KEYS as readonly string[]).includes(key)) // 永遠隱藏！
               .map(([key, cfg]) => {
                 const meta = BADGE_META[key] ?? { name: key, desc: "" };
-                const userBadge = progress.badges[key] ?? {
-                  tier: 0 as BadgeTier,
-                };
-
-                const rawTier = (userBadge as any).tier;
-                const tierNum =
-                  typeof rawTier === "string" ? Number(rawTier) : rawTier;
-                const tier: BadgeTier =
-                  tierNum === 1 || tierNum === 2 || tierNum === 3 ? tierNum : 0;
-
-                const style = TIER_STYLES[tier];
-                const icon = TIER_ICONS[tier];
-                const tierName = TIER_NAMES[tier];
-
+                const userBadge = progress.badges[key] ?? { tier: 0 as BadgeTier };
+                const tier = (typeof userBadge.tier === "string" ? Number(userBadge.tier) : userBadge.tier) as BadgeTier;
+                
+                const style = TIER_STYLES[tier]; const icon = TIER_ICONS[tier]; const tierName = TIER_NAMES[tier];
                 const [bronze, silver, gold] = cfg.thresholds;
-                const currentVal = getBadgeValue(key, progress);
+                const currentVal = getBadgeValue(key, progress); 
                 const isReverse = !!cfg.reverse;
 
-                let nextTarget = 0;
-                let nextTierLabel = "";
-                if (tier === 0) {
-                  nextTarget = bronze;
-                  nextTierLabel = "銅級";
-                } else if (tier === 1) {
-                  nextTarget = silver;
-                  nextTierLabel = "銀級";
-                } else if (tier === 2) {
-                  nextTarget = gold;
-                  nextTierLabel = "金級";
-                }
+                let nextTarget = tier === 0 ? bronze : tier === 1 ? silver : tier === 2 ? gold : 0;
+                let nextTierLabel = tier === 0 ? "銅級" : tier === 1 ? "銀級" : tier === 2 ? "金級" : "";
 
-                let diffText = "";
-                if (tier === 3) diffText = "已達最高等級！";
-                else if (!isReverse) {
-                  const remain = Math.max(0, nextTarget - currentVal);
-                  diffText =
-                    remain === 0
-                      ? `已達 ${nextTierLabel} 門檻`
-                      : `還差 ${remain} 才能升到 ${nextTierLabel}`;
-                } else {
-                  if (currentVal === 0)
-                    diffText = "尚未有紀錄，先完成一次挑戰看看。";
-                  else if (currentVal <= nextTarget)
-                    diffText = `已達 ${nextTierLabel} 門檻`;
-                  else
-                    diffText = `再快約 ${Math.round(currentVal - nextTarget)} 秒，可達 ${nextTierLabel}`;
-                }
+                let diffText = tier === 3 ? "已達最高等級！" :
+                  !isReverse ? (Math.max(0, nextTarget - currentVal) === 0 ? `已達 ${nextTierLabel} 門檻` : `還差 ${Math.max(0, nextTarget - currentVal)} 升級`) :
+                  (currentVal === 0 ? "尚未有紀錄" : currentVal <= nextTarget ? `已達 ${nextTierLabel} 門檻` : `再快約 ${Math.round(currentVal - nextTarget)} 秒升級`);
 
-                let ratio = 0;
-                if (!isReverse)
-                  ratio = gold > 0 ? Math.min(currentVal / gold, 1) : 0;
-                else {
-                  if (currentVal > 0)
-                    ratio =
-                      currentVal <= gold ? 1 : Math.min(bronze / currentVal, 1);
-                  else ratio = 0;
-                }
-
-                const isLocked = tier === 0;
+                let ratio = !isReverse ? (gold > 0 ? Math.min(currentVal / gold, 1) : 0) : (currentVal > 0 ? (currentVal <= gold ? 1 : Math.min(bronze / currentVal, 1)) : 0);
 
                 return (
-                  <div
-                    key={key}
-                    className={[
-                      "relative p-4 rounded-2xl border transition hover:scale-[1.02] cursor-default",
-                      style,
-                      isLocked ? "opacity-90" : "",
-                    ].join(" ")}
-                    title={meta.desc}
-                  >
-                    <div className="text-4xl mb-2 text-center drop-shadow-sm">
-                      {icon}
-                    </div>
-
-                    <div className="font-extrabold text-center text-base mb-1 text-neutral-900">
-                      {meta.name}
-                    </div>
-
-                    <div className="text-sm text-center text-neutral-800 min-h-[3em] flex items-center justify-center leading-snug">
-                      {meta.desc}
-                    </div>
-
+                  <div key={key} className={["relative p-4 rounded-2xl border transition hover:scale-[1.02] cursor-default", style, tier === 0 ? "opacity-90" : ""].join(" ")} title={meta.desc}>
+                    <div className="text-4xl mb-2 text-center drop-shadow-sm">{icon}</div>
+                    <div className="font-extrabold text-center text-base mb-1 text-neutral-900">{meta.name}</div>
+                    <div className="text-sm text-center text-neutral-800 min-h-[3em] flex items-center justify-center leading-snug">{meta.desc}</div>
                     <div className="mt-3">
-                      <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r-r from-amber-400 to-yellow-300 transition-all"
-                          style={{ width: `${Math.round(ratio * 100)}%` }}
-                        />
-                      </div>
-
-                      <div className="mt-2 text-sm font-semibold text-neutral-900">
-                        {diffText}
-                      </div>
-
-                      <div className="mt-1 text-xs text-neutral-700 leading-snug">
-                        {!isReverse ? (
-                          <>
-                            目前：
-                            <span className="font-mono font-semibold text-neutral-900">
-                              {currentVal}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            最佳紀錄：
-                            <span className="font-mono font-semibold text-neutral-900">
-                              {currentVal > 0 ? `${currentVal} 秒` : "—"}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all" style={{ width: `${Math.round(ratio * 100)}%` }} /></div>
+                      <div className="mt-2 text-sm font-semibold text-neutral-900">{diffText}</div>
+                      <div className="mt-1 text-xs text-neutral-700 leading-snug">目前：<span className="font-mono font-semibold text-neutral-900">{currentVal > 0 ? currentVal : "—"} {isReverse ? '秒' : ''}</span></div>
                     </div>
-
                     <div className="mt-3 pt-2 border-t border-black/10 flex justify-between items-center text-xs">
-                      <span className="font-mono font-semibold bg-black/10 px-2 py-1 rounded">
-                        {tierName}
-                      </span>
-                      <span className="text-neutral-800 text-right leading-tight font-medium">
-                        目標：
-                        <br />銅 {bronze}／銀 {silver}／金 {gold}
-                      </span>
+                      <span className="font-mono font-semibold bg-black/10 px-2 py-1 rounded">{tierName}</span>
+                      <span className="text-neutral-800 text-right leading-tight font-medium">目標：<br />銅 {bronze}／銀 {silver}／金 {gold}</span>
                     </div>
                   </div>
                 );

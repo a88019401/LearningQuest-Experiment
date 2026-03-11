@@ -555,13 +555,19 @@ function LearningQuestApp() {
 
   // 資料與進度
   const unit: UnitConfig = UNITS.find((u) => u.id === unitId)!;
-  const {
+const {
     progress,
     addXP,
     patchUnit,
     reportActivity,
     reportGrammarTetris,
+    reportSnake,
     reset,
+    loadingProgress,
+    upsertBadgePlan,   // ✅ 新增
+    retireBadgePlan,   // ✅ 新增
+    reflectBadgePlan,  // ✅ 新增
+    reportChallengeRun,
   } = useProgress();
 
   // 🔔 獎章解鎖提示 queue
@@ -724,7 +730,8 @@ function LearningQuestApp() {
       longSessions: isLongSession ? 1 : 0, // 長時間挑戰也算一次 longSessions
       totalErrors: Math.max(0, 10 - score),
     });
-
+// 🌟 新增這行：將挑戰結果獨立傳給 SRL 系統，精準攔截「極速傳說」的秒數！
+    reportChallengeRun({ score, timeUsed, stars: starsThisRun });
     // === 原本的進度更新邏輯 ===
     const newLv = {
       bestScore: Math.max(prevLv?.bestScore ?? 0, score),
@@ -1228,7 +1235,13 @@ function LearningQuestApp() {
               />
             ))}
           {/* 獎章區 */}
-          {tab === "badges" && <BadgesView progress={progress} />}
+          {tab === "badges" && (
+            <BadgesView 
+              progress={progress} 
+              upsertBadgePlan={upsertBadgePlan}
+              retireBadgePlan={retireBadgePlan}
+              reflectBadgePlan={reflectBadgePlan}
+            />)}
           {/* 4. ✅ 新增顯示排行榜的邏輯 */}
           {tab === "leaderboard" && <Leaderboard />}
         </div>
