@@ -200,25 +200,27 @@ function BadgePlanningPanel({
   };
 
   return (
-    <Card className="p-5">
-      <SectionTitle title="🎯 獎章規劃面板 (SRL)" desc="決定目標、監控進度、反思學習，成為自己的學習主人！" />
-      <div className="mt-3 flex justify-between items-center">
-        <div className="text-sm text-neutral-700">已規劃：<span className="font-semibold">{plans.length}</span> / {MAX_PLANS}</div>
-        <button onClick={openWizard} disabled={plans.length >= MAX_PLANS} className={`px-4 py-2 rounded-2xl text-sm font-medium border transition ${plans.length >= MAX_PLANS ? "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed" : "bg-neutral-900 text-white hover:bg-neutral-800"}`}>新增一個挑戰目標</button>
-      </div>
+    <>
+      <Card className="p-5">
+        <SectionTitle title="🎯 獎章規劃面板 (SRL)" desc="決定目標、監控進度、反思學習，成為自己的學習主人！" />
+        <div className="mt-3 flex justify-between items-center">
+          <div className="text-sm text-neutral-700">已規劃：<span className="font-semibold">{plans.length}</span> / {MAX_PLANS}</div>
+          <button onClick={openWizard} disabled={plans.length >= MAX_PLANS} className={`px-4 py-2 rounded-2xl text-sm font-medium border transition ${plans.length >= MAX_PLANS ? "border-neutral-200 bg-white text-neutral-300 cursor-not-allowed" : "bg-neutral-900 text-white hover:bg-neutral-800"}`}>新增一個自己的獎章吧</button>
+        </div>
 
-      {plans.length > 0 && <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{plans.map((p, i) => renderPlannedBadgeCard(p, i))}</div>}
+        {plans.length > 0 && <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{plans.map((p, i) => renderPlannedBadgeCard(p, i))}</div>}
+      </Card>
 
       {/* 🌟 設定目標 Wizard Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 " >
           <div className="relative w-full max-w-2xl bg-white rounded-2xl p-6 shadow-xl">
             <button onClick={closeWizard} className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-full transition" title="關閉">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
             <h2 className="text-xl font-bold mb-4">設定目標 (步驟 {step + 1} / 5)</h2>
-            <div className="min-h-[200px] mt-2">
+            <div className="min-h-[200px] mt-2 z-50">
               {step === 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   {rows.map((r) => {
@@ -336,7 +338,7 @@ function BadgePlanningPanel({
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
 }
 
