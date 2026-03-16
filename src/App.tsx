@@ -583,9 +583,7 @@ const {
     patchUnit,
     reportActivity,
     reportGrammarTetris,
-    reportSnake,
     reset,
-    loadingProgress,
     upsertBadgePlan,   // ✅ 新增
     retireBadgePlan,   // ✅ 新增
     reflectBadgePlan,  // ✅ 新增
