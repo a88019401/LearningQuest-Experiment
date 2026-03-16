@@ -15,6 +15,8 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
 
   const progress = points.length > 0 ? Math.round((mastered.size / points.length) * 100) : 100;
   const isAllMastered = mastered.size === points.length;
+  // 找出第一個尚未掌握的節點（作為「建議挑戰」的節點）
+  const firstUnmasteredIndex = points.findIndex((_, i) => !mastered.has(i));
 
   const handleMaster = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -62,10 +64,12 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
       </Card>
 
       {/* 卡片網格區：加入 items-start 防止拉伸 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start relative z-10">
         {points.map((g, i) => {
           const isMastered = mastered.has(i);
           const isActive = activeCard === i;
+          const isNextTarget = i === firstUnmasteredIndex && !isActive;
+          const isLocked = i > firstUnmasteredIndex && !isMastered;
 
           return (
             <div
@@ -75,13 +79,27 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
                 relative group cursor-pointer rounded-2xl border-2 transition-all duration-300 overflow-hidden
                 ${
                   isMastered
-                    ? "border-emerald-400 bg-emerald-50 shadow-sm scale-[0.98] opacity-80 hover:opacity-100" // 已掌握
+                    ? "border-emerald-400 bg-emerald-50/50 shadow-sm scale-[0.98] opacity-70 hover:opacity-100" // 已掌握
                     : isActive
-                    ? "border-indigo-500 bg-white ring-4 ring-indigo-100 shadow-xl scale-[1.02] z-20" // 展開中 (加了 z-20 確保蓋在上面)
-                    : "border-neutral-200 bg-white hover:border-indigo-300 hover:shadow-md z-0" // 預設
+                    ? "border-indigo-500 bg-white shadow-[0_0_20px_rgba(99,102,241,0.3)] scale-[1.02] z-20" // 展開中
+                    : isNextTarget
+                    ? "border-yellow-400 bg-white shadow-[0_0_15px_rgba(250,204,21,0.5)] z-10" // 下一個建議挑戰
+                    : isLocked
+                    ? "border-neutral-200 bg-neutral-50/50 opacity-60 hover:opacity-100" // 尚未輪到的關卡
+                    : "border-neutral-200 bg-white hover:border-indigo-300 hover:shadow-md z-0"
                 }
               `}
             >
+              {isNextTarget && (
+                <div className="absolute top-0 right-0 px-3 py-1 bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 text-[10px] font-black tracking-widest rounded-bl-lg animate-pulse">
+                  NEXT TARGET
+                </div>
+              )}
+              {isLocked && !isNextTarget && !isActive && (
+                <div className="absolute top-3 right-3 opacity-20 text-xl grayscale pointer-events-none">
+                  🔒
+                </div>
+              )}
               {/* 卡片標題區 */}
               <div className="p-4 flex items-start gap-3">
                 <div 

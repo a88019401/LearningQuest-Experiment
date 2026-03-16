@@ -128,7 +128,7 @@ function LevelGrid({
   return (
     <Card>
       <SectionTitle title="選擇關卡 (每單元 10 關)" />
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {Array.from({ length: total }, (_, i) => {
           const lv = i + 1;
           const unlocked = lv <= Math.max(1, unlockedCount);
@@ -138,16 +138,29 @@ function LevelGrid({
               key={lv}
               disabled={!unlocked}
               onClick={() => onPick(lv)}
-              className={`p-3 rounded-xl border text-left ${
+              className={`relative p-4 rounded-2xl border text-left transition-all duration-300 overflow-hidden group ${
                 unlocked
-                  ? "bg-white hover:bg-neutral-50"
-                  : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                  ? "bg-white hover:bg-neutral-50 hover:-translate-y-1 hover:shadow-lg border-neutral-200"
+                  : "bg-neutral-100/50 text-neutral-400 cursor-not-allowed border-neutral-200/50 backdrop-blur-sm"
               }`}
             >
-              <div className="text-xs opacity-70">LEVEL {lv}</div>
-              <div className="text-sm">
-                {"⭐".repeat(stars)}
-                {"☆".repeat(3 - stars)}
+              {!unlocked && (
+                <div className="absolute inset-0 bg-neutral-200/20 backdrop-grayscale-[0.5] z-0 flex items-center justify-center">
+                  <span className="text-2xl opacity-20 transform -rotate-12">🔒</span>
+                </div>
+              )}
+              {unlocked && stars === 3 && (
+                <div className="absolute -right-4 -top-4 w-16 h-16 bg-yellow-400/20 rounded-full blur-xl group-hover:bg-yellow-400/40 transition-colors"></div>
+              )}
+              <div className="relative z-10 flex flex-col h-full justify-between gap-2">
+                <div className={`text-xs font-bold tracking-wider ${unlocked ? "text-indigo-600" : "text-neutral-400"}`}>LEVEL {lv}</div>
+                <div className="text-sm flex gap-0.5">
+                  {Array.from({ length: 3 }).map((_, idx) => (
+                    <span key={idx} className={idx < stars ? "text-yellow-400 drop-shadow-[0_1px_3px_rgba(250,204,21,0.5)] text-lg" : "text-neutral-200 text-lg"}>
+                      ★
+                    </span>
+                  ))}
+                </div>
               </div>
             </button>
           );
@@ -382,13 +395,20 @@ function AuthGate() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 flex items-center justify-center">
-      <div className="w-full max-w-sm p-8 space-y-6 bg-white rounded-2xl shadow-lg border">
-        <div>
-          <h1 className="text-2xl font-bold">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-50">
+      {/* 裝飾性背景光暈 */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"></div>
+      <div className="absolute top-1/2 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse" style={{ animationDelay: '2s' }}></div>
+
+      <div className="w-full max-w-sm p-8 space-y-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 relative z-10 transition-all duration-300">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg text-white font-bold text-2xl">
+            L
+          </div>
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-700">
             {mode === "signin" ? "登入 LearningQuest" : "註冊 LearningQuest"}
           </h1>
-          <p className="text-sm text-neutral-500 mt-1">
+          <p className="text-sm text-neutral-500 mt-2 font-medium">
             {mode === "signin"
               ? "請輸入 Email 與密碼以登入。"
               : "請輸入 Email 與密碼以建立帳號。"}
@@ -411,16 +431,16 @@ function AuthGate() {
             <label htmlFor="email" className="text-sm font-medium">
               Email
             </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="your.email@example.com"
-              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-400"
-            />
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="your.email@example.com"
+                className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              />
           </div>
 
           <div className="space-y-2">
@@ -438,7 +458,7 @@ function AuthGate() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder={mode === "signup" ? "至少 6 個字元" : "請輸入密碼"}
-                className="w-full px-4 py-2 border rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+                className="w-full px-4 py-2 border border-neutral-200 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
               <button
                 type="button"
@@ -469,7 +489,7 @@ function AuthGate() {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
                 placeholder="請再次輸入密碼"
-                className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-neutral-400"
+                className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
           )}
@@ -477,7 +497,7 @@ function AuthGate() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 text-white bg-neutral-900 rounded-xl disabled:opacity-50"
+            className="w-full px-4 py-3 text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl font-medium shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:hover:translate-y-0"
           >
             {loading ? "處理中..." : mode === "signin" ? "登入" : "建立帳號"}
           </button>
@@ -539,6 +559,8 @@ export default function App() {
 }
 function LearningQuestApp() {
   // 頁籤 / 視圖狀態
+    const { signOut } = useAuth();
+
   const [tab, setTab] = useState<Tab>("learn");
   const [unitId] = useState<UnitId>(1);
   const [sub, setSub] = useState<LearnSubTab>("vocab");
@@ -793,19 +815,24 @@ const {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-100 to-neutral-50 text-neutral-900">
+    <div className="min-h-screen text-neutral-900 relative">
       {/* Header */}
 
-      <header className="max-w-5xl mx-auto px-4 py-5 flex items-center justify-between">
-        <div>
-          <div className="text-2xl font-bold tracking-tight">
-            英文遊戲學習平台
+      <header className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg text-white font-bold text-2xl flex-shrink-0">
+            L
           </div>
-          <div className="text-sm text-neutral-500">
-            可模組化英語學習 ·{UNITS.length} 單元 · 遊戲化
+          <div>
+            <div className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              英文遊戲學習平台
+            </div>
+            <div className="text-sm font-medium text-neutral-500/80">
+              可模組化英語學習 · 遊戲化體驗 · {UNITS.length} 單元
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
           <TabButton active={tab === "learn"} onClick={() => setTab("learn")}>
             學習區
           </TabButton>
@@ -832,10 +859,9 @@ const {
           {/* ✅ 新增登出 */}
           <button
             onClick={async () => {
-              await supabase.auth.signOut();
-              // 不用手動 redirect，AuthContext 會收到 SIGNED_OUT
+              await signOut();
             }}
-            className="px-3 py-2 rounded-xl border text-sm bg-white hover:bg-neutral-50"
+            className="px-4 py-2 rounded-2xl border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-sm font-medium text-rose-600 transition-all flex-shrink-0"
             title="實驗或共用電腦建議一定要登出"
           >
             登出
@@ -845,28 +871,33 @@ const {
 
       <main className="max-w-5xl mx-auto px-4 pb-10">
         {/* HUD */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          <Card>
-            <div className="text-sm text-neutral-500">目前單元</div>
-            <div className="text-lg font-semibold">{unit.title}</div>
-            {/*<div className="mt-2 text-sm">
-              星等：{"⭐".repeat(uProg.stars)}
-              {"☆".repeat(3 - uProg.stars)}
-            </div>*/}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 relative z-10">
+          <Card className="flex flex-col justify-center">
+            <div className="text-sm font-medium text-neutral-500 mb-1 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span> 目前單元
+            </div>
+            <div className="text-xl font-bold text-neutral-800">{unit.title}</div>
           </Card>
-          <Card>
-            <div className="text-sm text-neutral-500">本單元 XP</div>
-            <div className="text-2xl font-bold">{uProg.xp}</div>
-            <div className="text-sm text-neutral-500">
+          <Card className="flex flex-col justify-center relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-24 h-24 bg-yellow-400/20 rounded-full blur-2xl group-hover:bg-yellow-400/30 transition-colors"></div>
+            <div className="text-sm font-medium text-neutral-500 mb-1 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]"></span> 本單元 XP
+            </div>
+            <div className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-yellow-500 to-orange-500 drop-shadow-sm">
+              {uProg.xp}
+            </div>
+            <div className="text-xs font-medium text-neutral-400 mt-1">
               總 XP：{progress.totalXP}
             </div>
           </Card>
-          <Card>
-            <div className="text-sm text-neutral-500">快捷</div>
-            <div className="flex gap-2 mt-2">
+          <Card className="flex flex-col justify-center">
+            <div className="text-sm font-medium text-neutral-500 mb-2 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span> 快捷
+            </div>
+            <div className="flex gap-2">
               <button
                 onClick={reset}
-                className="px-3 py-2 rounded-xl border text-sm"
+                className="px-3 py-1.5 rounded-xl border border-neutral-200/80 bg-white/50 hover:bg-white text-sm font-medium text-neutral-600 transition-all hover:shadow-sm"
               >
                 重置進度
               </button>
@@ -874,7 +905,7 @@ const {
                 onClick={() =>
                   alert("請在 data/units.ts 中替換成你的題庫即可擴充 6 單元。")
                 }
-                className="px-3 py-2 rounded-xl border text-sm"
+                className="px-3 py-1.5 rounded-xl border border-neutral-200/80 bg-white/50 hover:bg-white text-sm font-medium text-neutral-600 transition-all hover:shadow-sm"
               >
                 如何擴充？
               </button>
@@ -974,7 +1005,7 @@ const {
                       active={grammarView === "reorder"}
                       onClick={() => setGrammarView("reorder")}
                     >
-                      俄羅斯方塊
+                      方塊
                     </TabButton>
                   </div>
                 )}
