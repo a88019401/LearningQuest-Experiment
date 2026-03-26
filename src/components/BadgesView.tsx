@@ -3,7 +3,9 @@ import type { Progress, BadgeTier, BadgePlanConfig, CustomThresholds } from "../
 import { BADGE_QR, getBadgeValue, getEffectiveProgress } from "../state/progress";
 import { useMemo, useState } from "react";
 import { Card, SectionTitle } from "./ui";
-
+import { useAuth } from "../state/AuthContext"; // ✨ 新增
+import { logLSAEvent } from "../lib/analytics"; // ✨ 新增
+import { LsaState } from "../lib/lsa-states";   // ✨ 新增
 export const BADGE_META: Record<string, { name: string; desc: string }> = {
   GAME_LOVER: { name: "遊戲狂熱", desc: "在同一次遊戲連續挑戰中，最高連勝場數" },
   VOCAB_DRILLER: { name: "單字達人", desc: "完成「單字集」研讀次數累積" },
@@ -50,12 +52,13 @@ const SRL_BADGE_TEMPLATES = [
 ];
 
 function BadgePlanningPanel({
-  plans, progress, upsertBadgePlan, retireBadgePlan, reflectBadgePlan,
+  plans, progress, upsertBadgePlan, retireBadgePlan, reflectBadgePlan,user, profile // ✨ 接收參數
 }: {
   plans: BadgePlanConfig[]; progress: Progress;
   upsertBadgePlan: (plan: BadgePlanConfig) => void;
   retireBadgePlan: (id: string, reason: string, note: string) => void;
   reflectBadgePlan: (id: string, reason: string, note: string) => void;
+  user: any; profile: any; // ✨ 補上型別
 }) {
   const [rows, setRows] = useState(() => SRL_BADGE_TEMPLATES.map((t) => ({ ...t, thresholds: { bronze: 0, silver: 0, gold: 0 }, confidence: 3, justification: "" })));
   const [isOpen, setIsOpen] = useState(false);
@@ -93,6 +96,8 @@ function BadgePlanningPanel({
 
   const openWizard = () => {
     if (plans.length >= MAX_PLANS) return;
+    // ✨ 紀錄：學生點開了計畫視窗（展現 SRL 計畫意圖）
+    logLSAEvent(user?.id, profile?.full_name, LsaState.SRL_PLAN_OPEN);
     const last = plans[plans.length - 1];
 
     if (last && !last.retired && safeTierOf(last.key) === 0) {
@@ -114,14 +119,36 @@ function BadgePlanningPanel({
     return false;
   };
 
-  const finishOne = () => {
+const finishOne = () => {
     if (!currentRow) return;
+
+    // ✨ 1. 先產生 ID 並存入變數，這樣這個 ID 才能被重複使用
+    const planId = `plan_${Date.now()}_${Math.floor(Math.random() * 1000)}`; 
+
+    // ✨ 2. 系統運作：將計畫存入進度系統
     upsertBadgePlan({
-      id: `plan_${Date.now()}_${Math.floor(Math.random() * 1000)}`, // 🌟 賦予獨立身分證
-      key: currentRow.key, name: currentRow.name, category: currentRow.category, method: currentRow.method,
-      thresholds: currentRow.thresholds, confidence: currentRow.confidence, justification: currentRow.justification,
+      id: planId, // 🌟 使用剛產生的變數
+      key: currentRow.key, 
+      name: currentRow.name, 
+      category: currentRow.category, 
+      method: currentRow.method,
+      thresholds: currentRow.thresholds, 
+      confidence: currentRow.confidence, 
+      justification: currentRow.justification,
       updatedAt: new Date().toISOString()
     });
+
+    // ✨ 3. 研究分析：將行為紀錄到 Supabase
+    logLSAEvent(user?.id, profile?.full_name, LsaState.SRL_PLAN_SAVE, {
+      planId: planId,       // 🌟 這裡就能記下同一個 ID 了！
+      badgeKey: currentRow.key,
+      badgeName: currentRow.name,
+      category: currentRow.category,
+      goal: currentRow.thresholds,
+      confidence: currentRow.confidence,
+      justification: currentRow.justification
+    });
+
     closeWizard();
   };
 
@@ -303,7 +330,20 @@ function BadgePlanningPanel({
 
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setRetireOpen(false)} className="px-4 py-2 border rounded-xl hover:bg-neutral-50">取消</button>
-              <button disabled={!retireReason || retireNote.trim().length < 8} onClick={() => { retireBadgePlan(retireId, retireReason, retireNote); setRetireOpen(false); }} className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-red-700 transition">確定退休</button>
+              <button disabled={!retireReason || retireNote.trim().length < 8} onClick={() => { 
+                // ✨ 先找出這筆計畫的資訊
+    const targetPlan = plans.find(p => p.id === retireId);
+                retireBadgePlan(retireId, retireReason, retireNote); 
+                // ✨ 紀錄退休原因
+// ✨ 紀錄：補上 badgeKey 資訊
+    logLSAEvent(user?.id, profile?.full_name, LsaState.SRL_PLAN_RETIRE, {
+      planId: retireId,  // ✨ 注意：這裡要用 retireId，因為它是這層函式的變數名稱
+      badgeKey: targetPlan?.key,  // ✨ 補上
+      badgeName: targetPlan?.name, // ✨ 補上
+      reason: retireReason,
+      note: retireNote
+    });
+                setRetireOpen(false); }} className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-red-700 transition">確定退休</button>
             </div>
           </div>
         </div>
@@ -333,7 +373,20 @@ function BadgePlanningPanel({
 
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setPassOpen(false)} className="px-4 py-2 border rounded-xl hover:bg-neutral-50">取消</button>
-              <button disabled={!passReason || passNote.trim().length < 8} onClick={() => { reflectBadgePlan(passId, passReason, passNote); setPassOpen(false); }} className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-green-700 transition">記錄反思寫入</button>
+              <button disabled={!passReason || passNote.trim().length < 8} 
+              onClick={() => { 
+                // ✨ 先找出這筆計畫的資訊
+    const targetPlan = plans.find(p => p.id === passId);
+                reflectBadgePlan(passId, passReason, passNote); 
+                // ✨ 紀錄反思內容
+// ✨ 紀錄：補上 badgeKey 資訊
+    logLSAEvent(user?.id, profile?.full_name, LsaState.SRL_REFLECTION_SAVE, {
+      badgeKey: targetPlan?.key,  // ✨ 補上
+      badgeName: targetPlan?.name, // ✨ 補上
+      reason: passReason,
+      note: passNote
+    });
+                setPassOpen(false); }} className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-green-700 transition">記錄反思寫入</button>
             </div>
           </div>
         </div>
@@ -347,6 +400,7 @@ export default function BadgesView({
 }: {
   progress: Progress; upsertBadgePlan: any; retireBadgePlan: any; reflectBadgePlan: any;
 }) {
+  const { user, profile } = useAuth(); // ✨ 補上這行
   const plans = Object.values(progress.badgePlans ?? {}); 
   const categories: Record<"participation" | "skill" | "encouragement", string> = { participation: "參與類 Participation", skill: "技巧類 Skill", encouragement: "鼓勵類 Encouragement" };
 
@@ -354,7 +408,9 @@ export default function BadgesView({
     <div className="space-y-8 pb-10">
       
       {/* 🌟 實驗組永遠顯示 SRL 面板 */}
-      <BadgePlanningPanel plans={plans} progress={progress} upsertBadgePlan={upsertBadgePlan} retireBadgePlan={retireBadgePlan} reflectBadgePlan={reflectBadgePlan} />
+      <BadgePlanningPanel plans={plans} progress={progress} upsertBadgePlan={upsertBadgePlan} retireBadgePlan={retireBadgePlan} reflectBadgePlan={reflectBadgePlan} user={user}      // ✨ 傳入
+        profile={profile} // ✨ 傳入
+        />
 
       {/* 下方：傳統獎章牆 (永遠排除 6 枚 SRL 獎章) */}
       {(["participation", "skill", "encouragement"] as const).map((cat) => (

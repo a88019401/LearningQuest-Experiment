@@ -41,11 +41,13 @@ import { useAuth } from "./state/AuthContext"; // <-- 匯入 useAuth
 import { supabase } from "./supabaseClient"; // <-- 匯入 supabase client
 import ProfileSetup from "./components/ProfileSetup";
 import Leaderboard from "./components/Leaderboard";
+import { logLSAEvent } from "./lib/analytics";
+import { LsaState } from "./lib/lsa-states";
 /* -----------------------------
    類型（僅供本檔使用）
 ------------------------------ */
 type Tab = "learn" | "challenge" | "badges" | "leaderboard";
-type LearnSubTab = "vocab" | "grammar" | "text";
+type LearnSubTab = "vocab" | "grammar" | "text" | null;
 type VocabView = "set" | "quiz" | "snake";
 type GrammarView = "explain" | "reorder";
 type TextView = "story" | "arrange";
@@ -146,17 +148,30 @@ function LevelGrid({
             >
               {!unlocked && (
                 <div className="absolute inset-0 bg-neutral-200/20 backdrop-grayscale-[0.5] z-0 flex items-center justify-center">
-                  <span className="text-2xl opacity-20 transform -rotate-12">🔒</span>
+                  <span className="text-2xl opacity-20 transform -rotate-12">
+                    🔒
+                  </span>
                 </div>
               )}
               {unlocked && stars === 3 && (
                 <div className="absolute -right-4 -top-4 w-16 h-16 bg-yellow-400/20 rounded-full blur-xl group-hover:bg-yellow-400/40 transition-colors"></div>
               )}
               <div className="relative z-10 flex flex-col h-full justify-between gap-2">
-                <div className={`text-xs font-bold tracking-wider ${unlocked ? "text-indigo-600" : "text-neutral-400"}`}>LEVEL {lv}</div>
+                <div
+                  className={`text-xs font-bold tracking-wider ${unlocked ? "text-indigo-600" : "text-neutral-400"}`}
+                >
+                  LEVEL {lv}
+                </div>
                 <div className="text-sm flex gap-0.5">
                   {Array.from({ length: 3 }).map((_, idx) => (
-                    <span key={idx} className={idx < stars ? "text-yellow-400 drop-shadow-[0_1px_3px_rgba(250,204,21,0.5)] text-lg" : "text-neutral-200 text-lg"}>
+                    <span
+                      key={idx}
+                      className={
+                        idx < stars
+                          ? "text-yellow-400 drop-shadow-[0_1px_3px_rgba(250,204,21,0.5)] text-lg"
+                          : "text-neutral-200 text-lg"
+                      }
+                    >
                       ★
                     </span>
                   ))}
@@ -398,7 +413,10 @@ function AuthGate() {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-50">
       {/* 裝飾性背景光暈 */}
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"></div>
-      <div className="absolute top-1/2 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse" style={{ animationDelay: '2s' }}></div>
+      <div
+        className="absolute top-1/2 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse"
+        style={{ animationDelay: "2s" }}
+      ></div>
 
       <div className="w-full max-w-sm p-8 space-y-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 relative z-10 transition-all duration-300">
         <div className="text-center">
@@ -431,16 +449,16 @@ function AuthGate() {
             <label htmlFor="email" className="text-sm font-medium">
               Email
             </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="your.email@example.com"
-                className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              />
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="your.email@example.com"
+              className="w-full px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
           </div>
 
           <div className="space-y-2">
@@ -559,11 +577,10 @@ export default function App() {
 }
 function LearningQuestApp() {
   // 頁籤 / 視圖狀態
-    const { signOut } = useAuth();
-
+const { signOut, user, profile } = useAuth();
   const [tab, setTab] = useState<Tab>("learn");
   const [unitId] = useState<UnitId>(1);
-  const [sub, setSub] = useState<LearnSubTab>("vocab");
+  const [sub, setSub] = useState<LearnSubTab>(null);
   const [vocabView, setVocabView] = useState<VocabView>("set");
   const [grammarView, setGrammarView] = useState<GrammarView>("explain");
   const [textView, setTextView] = useState<TextView>("story");
@@ -577,16 +594,16 @@ function LearningQuestApp() {
 
   // 資料與進度
   const unit: UnitConfig = UNITS.find((u) => u.id === unitId)!;
-const {
+  const {
     progress,
     addXP,
     patchUnit,
     reportActivity,
     reportGrammarTetris,
     reset,
-    upsertBadgePlan,   // ✅ 新增
-    retireBadgePlan,   // ✅ 新增
-    reflectBadgePlan,  // ✅ 新增
+    upsertBadgePlan, // ✅ 新增
+    retireBadgePlan, // ✅ 新增
+    reflectBadgePlan, // ✅ 新增
     reportChallengeRun,
   } = useProgress();
 
@@ -750,7 +767,7 @@ const {
       longSessions: isLongSession ? 1 : 0, // 長時間挑戰也算一次 longSessions
       totalErrors: Math.max(0, 10 - score),
     });
-// 🌟 新增這行：將挑戰結果獨立傳給 SRL 系統，精準攔截「極速傳說」的秒數！
+    // 🌟 新增這行：將挑戰結果獨立傳給 SRL 系統，精準攔截「極速傳說」的秒數！
     reportChallengeRun({ score, timeUsed, stars: starsThisRun });
     // === 原本的進度更新邏輯 ===
     const newLv = {
@@ -831,26 +848,44 @@ const {
           </div>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
-          <TabButton active={tab === "learn"} onClick={() => setTab("learn")}>
+          <TabButton
+            active={tab === "learn"}
+            onClick={() => {
+              logLSAEvent(user?.id, profile?.full_name, LsaState.NAV_LEARN);
+              setTab("learn");
+              setSub(null);
+            }}
+          >
             學習區
           </TabButton>
           <TabButton
             active={tab === "challenge"}
             onClick={() => {
+              logLSAEvent(user?.id, profile?.full_name, LsaState.NAV_CHALLENGE);
               setTab("challenge");
-              setMode("select");
-              setLevel(calcUnlockedCount(uProg.challenge.levels, 10));
             }}
           >
             挑戰區
           </TabButton>
-          <TabButton active={tab === "badges"} onClick={() => setTab("badges")}>
+          <TabButton
+            active={tab === "badges"}
+            onClick={() => {
+              logLSAEvent(user?.id, profile?.full_name, LsaState.NAV_BADGES);
+              setTab("badges");
+            }}
+          >
             獎章區
           </TabButton>
-          {/* 3. ✅ 新增排行榜按鈕 */}
           <TabButton
             active={tab === "leaderboard"}
-            onClick={() => setTab("leaderboard")}
+            onClick={() => {
+              logLSAEvent(
+                user?.id,
+                profile?.full_name,
+                LsaState.NAV_LEADERBOARD,
+              );
+              setTab("leaderboard");
+            }}
           >
             排行榜
           </TabButton>{" "}
@@ -872,14 +907,18 @@ const {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 relative z-10">
           <Card className="flex flex-col justify-center">
             <div className="text-sm font-medium text-neutral-500 mb-1 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span> 目前單元
+              <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>{" "}
+              目前單元
             </div>
-            <div className="text-xl font-bold text-neutral-800">{unit.title}</div>
+            <div className="text-xl font-bold text-neutral-800">
+              {unit.title}
+            </div>
           </Card>
           <Card className="flex flex-col justify-center relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-yellow-400/20 rounded-full blur-2xl group-hover:bg-yellow-400/30 transition-colors"></div>
             <div className="text-sm font-medium text-neutral-500 mb-1 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]"></span> 本單元 XP
+              <span className="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]"></span>{" "}
+              本單元 XP
             </div>
             <div className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br from-yellow-500 to-orange-500 drop-shadow-sm">
               {uProg.xp}
@@ -890,7 +929,8 @@ const {
           </Card>
           <Card className="flex flex-col justify-center">
             <div className="text-sm font-medium text-neutral-500 mb-2 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span> 快捷
+              <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span>{" "}
+              快捷
             </div>
             <div className="flex gap-2">
               <button
@@ -953,13 +993,42 @@ const {
                 <div className="flex items-center gap-2 mb-3">
                   <TabButton
                     active={sub === "vocab"}
-                    onClick={() => setSub("vocab")}
+                    onClick={() => {
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.NAV_LEARN,
+                        { sub: "vocab" },
+                      );
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.LEARN_VOCAB_SET,
+                      );
+                      setSub("vocab");
+                      setVocabView("set");
+                    }}
                   >
                     1. 單字
                   </TabButton>
+
                   <TabButton
                     active={sub === "grammar"}
-                    onClick={() => setSub("grammar")}
+                    onClick={() => {
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.NAV_LEARN,
+                        { sub: "grammar" },
+                      );
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.LEARN_GRAMMAR_EXPLAIN,
+                      );
+                      setSub("grammar");
+                      setGrammarView("explain");
+                    }}
                   >
                     2. 文法
                   </TabButton>
@@ -970,6 +1039,13 @@ const {
                     3. 課文
                   </TabButton>*/}
                 </div>
+                {sub === null && (
+                  <div className="py-20 text-center border-2 border-dashed border-neutral-200 rounded-3xl">
+                    <p className="text-neutral-400 font-medium">
+                      請點選上方按鈕開始學習 🚀
+                    </p>
+                  </div>
+                )}
 
                 {sub === "vocab" && (
                   <div className="flex items-center gap-2">
@@ -1265,12 +1341,13 @@ const {
             ))}
           {/* 獎章區 */}
           {tab === "badges" && (
-            <BadgesView 
-              progress={progress} 
+            <BadgesView
+              progress={progress}
               upsertBadgePlan={upsertBadgePlan}
               retireBadgePlan={retireBadgePlan}
               reflectBadgePlan={reflectBadgePlan}
-            />)}
+            />
+          )}
           {/* 4. ✅ 新增顯示排行榜的邏輯 */}
           {tab === "leaderboard" && <Leaderboard />}
         </div>

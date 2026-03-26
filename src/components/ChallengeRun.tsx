@@ -3,7 +3,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { UnitConfig } from "../types";
 import { Card, SectionTitle } from "./ui";
 import { makeChallengeSet } from "../lib/questionGen";
-
+import { useAuth } from "../state/AuthContext";
+import { logLSAEvent } from "../lib/analytics";
+import { LsaState } from "../lib/lsa-states";
 // ---- 題目/回顧型別（在這檔內就好，避免大改 types.ts）----
 export type MCQ = {
   id?: string;
@@ -67,6 +69,7 @@ export default function ChallengeRun({
   perQuestionTime = 20,
   onFinish,
 }: Props) {
+  const { user, profile } = useAuth();
   // 題庫
   const QUESTIONS: MCQ[] = useMemo(
     () => fixedSet?.questions ?? makeChallengeSet(unit, 10),
@@ -122,6 +125,11 @@ const item: RunReportItem = {
   }, [left, started]);
 
   function start() {
+    const levelName = fixedSet?.meta?.title || "random_challenge";
+    logLSAEvent(user?.id, profile?.full_name, LsaState.CHALLENGE_START, { 
+      unitId: unit.id, 
+      level: levelName 
+    });
     setStarted(true);
     setIdx(0);
     setScore(0);
@@ -133,6 +141,13 @@ const item: RunReportItem = {
 
   function finishRun() {
     const used = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
+    // ✨ 新增追蹤：挑戰結束
+    logLSAEvent(user?.id, profile?.full_name, LsaState.CHALLENGE_FINISH, {
+      unitId: unit.id,
+      level: fixedSet?.meta?.title || "random",
+      score: score, // 答對題數
+      timeUsed: used // 花費秒數
+    });
     onFinish(score, used, { items: report });
   }
 
