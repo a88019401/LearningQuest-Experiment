@@ -142,7 +142,7 @@ function makeRandomPiece(): Piece {
 }
 function emptyBoard(): Board {
   return Array.from({ length: GRID }, () =>
-    Array.from({ length: GRID }, () => 0 as Cell)
+    Array.from({ length: GRID }, () => 0 as Cell),
   );
 }
 
@@ -196,13 +196,33 @@ const DroppableCell: React.FC<{
   );
 };
 
+const PieceUI: React.FC<{ piece: Piece }> = ({ piece }) => (
+  <div
+    className="grid auto-rows-max gap-0.5"
+    style={{ gridTemplateColumns: `repeat(${piece.w}, 1.75rem)` }}
+  >
+    {Array.from({ length: piece.h }).map((_, r) =>
+      Array.from({ length: piece.w }).map((_, c) => {
+        const on = piece.cells.some(([x, y]) => x === c && y === r);
+        return (
+          <div
+            key={r + "-" + c}
+            className={
+              "w-7 h-7 rounded-md " + (on ? "bg-neutral-900" : "bg-neutral-200")
+            }
+          />
+        );
+      }),
+    )}
+  </div>
+);
+
 const DraggablePiece: React.FC<{
   piece: Piece;
   disabled?: boolean;
   selected?: boolean;
   onSelect?: () => void;
-  isGhost?: boolean; // 拖曳浮層用
-}> = ({ piece, disabled, selected, onSelect, isGhost }) => {
+}> = ({ piece, disabled, selected, onSelect }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: piece.id, disabled });
 
@@ -216,7 +236,7 @@ const DraggablePiece: React.FC<{
         "inline-block p-2 rounded-2xl border bg-white shadow-sm select-none " +
         (disabled ? "opacity-40 cursor-not-allowed " : "cursor-grab ") +
         (selected ? "ring-2 ring-neutral-900 " : "") +
-        (isGhost ? "opacity-0 " : isDragging ? "opacity-0 " : "")
+        (isDragging ? "opacity-0 " : "") // 拖曳時本體隱藏
       }
       aria-roledescription="draggable-piece"
       style={{
@@ -226,25 +246,7 @@ const DraggablePiece: React.FC<{
         touchAction: "none",
       }}
     >
-      <div
-        className="grid auto-rows-max gap-0.5"
-        style={{ gridTemplateColumns: `repeat(${piece.w}, 1.75rem)` }}
-      >
-        {Array.from({ length: piece.h }).map((_, r) =>
-          Array.from({ length: piece.w }).map((_, c) => {
-            const on = piece.cells.some(([x, y]) => x === c && y === r);
-            return (
-              <div
-                key={r + "-" + c}
-                className={
-                  "w-7 h-7 rounded-md " +
-                  (on ? "bg-neutral-900" : "bg-neutral-200")
-                }
-              />
-            );
-          })
-        )}
-      </div>
+      <PieceUI piece={piece} />
     </button>
   );
 };
@@ -311,7 +313,7 @@ export default function ReorderSentenceGame({
     Array<{ question: string; correct: string }>
   >([]);
   const [gameOver, setGameOver] = useState<null | { reason: GameOverReason }>(
-    null
+    null,
   );
 
   /** ===== DnD sensors ===== */
@@ -319,7 +321,7 @@ export default function ReorderSentenceGame({
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, {
       activationConstraint: { delay: 120, tolerance: 8 },
-    })
+    }),
   );
 
   /** ===== 拖曳狀態（Ghost + 預覽） ===== */
@@ -330,7 +332,7 @@ export default function ReorderSentenceGame({
   } | null>(null);
   const activePiece = useMemo(
     () => (activeId ? bag.find((p) => p.id === activeId) : null),
-    [activeId, bag]
+    [activeId, bag],
   );
 
   /** ===== 階段 ===== */
@@ -557,7 +559,7 @@ export default function ReorderSentenceGame({
       window.dispatchEvent(
         new CustomEvent("learning-quest:grammar-tetris-report", {
           detail: report,
-        })
+        }),
       );
     } catch {}
 
@@ -593,7 +595,7 @@ export default function ReorderSentenceGame({
                 game: "tetris",
                 score: linesCleared,
               },
-              { onConflict: "user_id,game", ignoreDuplicates: false }
+              { onConflict: "user_id,game", ignoreDuplicates: false },
             );
           if (upsertError) throw upsertError;
           console.log("Successfully upserted new high score for tetris!");
@@ -623,7 +625,7 @@ export default function ReorderSentenceGame({
      ========================= */
   const previewBoard = useMemo((): PreviewCell[][] => {
     const grid = Array.from({ length: GRID }, () =>
-      Array.from({ length: GRID }, () => "empty" as PreviewCell)
+      Array.from({ length: GRID }, () => "empty" as PreviewCell),
     );
     if (!activePiece || !hoveredCell) return grid;
 
@@ -704,7 +706,7 @@ export default function ReorderSentenceGame({
                         onClick={() => onCellClick(r, c)}
                       />
                     );
-                  })
+                  }),
                 )}
               </div>
 
@@ -719,7 +721,7 @@ export default function ReorderSentenceGame({
                       key={`prev-${r}-${c}`}
                       status={previewBoard[r][c]}
                     />
-                  ))
+                  )),
                 )}
               </div>
             </div>
@@ -761,7 +763,9 @@ export default function ReorderSentenceGame({
           {/* 拖曳浮層：in-ghost（不可見本體，只看紅/綠預覽） */}
           <DragOverlay>
             {activePiece ? (
-              <DraggablePiece piece={activePiece} isGhost />
+              <div className="inline-block p-2 rounded-2xl border bg-white shadow-sm select-none opacity-0 pointer-events-none">
+                <PieceUI piece={activePiece} />
+              </div>
             ) : null}
           </DragOverlay>
         </DndContext>
@@ -793,8 +797,8 @@ export default function ReorderSentenceGame({
             (checked === null
               ? "bg-white border-neutral-200"
               : checked
-              ? "bg-green-50 border-green-300"
-              : "bg-red-50 border-red-300")
+                ? "bg-green-50 border-green-300"
+                : "bg-red-50 border-red-300")
           }
         >
           {picked.length === 0 ? (
