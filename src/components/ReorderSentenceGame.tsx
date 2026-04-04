@@ -282,19 +282,27 @@ export default function ReorderSentenceGame({
   const { user, profile } = useAuth();
 
   /** ===== 句庫與回合 ===== */
-  const roundsRef = useRef<string[] | null>(null);
-  if (!roundsRef.current) {
-    // 轉換 targets 為純字串陣列（提取 en 文本）
-    const sentenceList = targets.map((t) => (typeof t === "string" ? t : t.en));
-    roundsRef.current = shuffle(sentenceList);
-  }
-  const rounds = roundsRef.current!;
-  const total = rounds.length;
-  const [roundIdx, setRoundIdx] = useState(0);
+type SentenceTarget = {
+  en: string;
+  zh?: string;
+};
 
-  /** ===== 文法作答狀態 ===== */
-  const current = rounds[roundIdx] ?? "";
-  const answerTokens = useMemo(() => tokenize(current), [current]);
+const roundsRef = useRef<SentenceTarget[] | null>(null);
+if (!roundsRef.current) {
+  const sentenceList = targets.map((t) =>
+    typeof t === "string" ? { en: t } : { en: t.en, zh: t.zh },
+  );
+  roundsRef.current = shuffle(sentenceList);
+}
+const rounds = roundsRef.current!;
+const total = rounds.length;
+const [roundIdx, setRoundIdx] = useState(0);
+
+/** ===== 文法作答狀態 ===== */
+const currentTarget = rounds[roundIdx] ?? { en: "", zh: "" };
+const current = currentTarget.en;
+const currentZh = currentTarget.zh ?? "";
+const answerTokens = useMemo(() => tokenize(current), [current]);
   const [tray, setTray] = useState<string[]>(() => {
     let shuffled = shuffle(answerTokens);
     if (shuffled.join("|") === answerTokens.join("|"))
@@ -530,8 +538,7 @@ export default function ReorderSentenceGame({
     }
     const nextIdx = roundIdx + 1;
     setRoundIdx(nextIdx);
-    const nextAns = tokenize(rounds[nextIdx] ?? "");
-    let shuffled = shuffle(nextAns);
+const nextAns = tokenize(rounds[nextIdx]?.en ?? "");    let shuffled = shuffle(nextAns);
     if (shuffled.join("|") === nextAns.join("|")) shuffled = shuffle(nextAns);
     setTray(shuffled);
     setPicked([]);
@@ -797,9 +804,16 @@ export default function ReorderSentenceGame({
           </div>
         </div>
 
-        <div className="text-xs text-neutral-500 mb-2">
-          點選下方片段來排列；排好後按「繳交」。若錯誤會立即顯示正解並提供「知道了」。
-        </div>
+ <div className="text-xs text-neutral-500 mb-2">
+  點選下方片段來排列；排好後按「繳交」。若錯誤會立即顯示正解並提供「知道了」。
+</div>
+
+{currentZh && (
+  <div className="mb-3 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 text-sm text-amber-900">
+    <span className="font-semibold">中文提示：</span>
+    {currentZh}
+  </div>
+)}
 
         {/* 已選答案區 */}
         <div
@@ -959,8 +973,7 @@ export default function ReorderSentenceGame({
                 onClick={() => {
                   onRetry?.();
                   setRoundIdx(0);
-                  const firstAns = tokenize(rounds[0] ?? "");
-                  let shuffled = shuffle(firstAns);
+const firstAns = tokenize(rounds[0]?.en ?? "");                  let shuffled = shuffle(firstAns);
                   if (shuffled.join("|") === firstAns.join("|"))
                     shuffled = shuffle(firstAns);
                   setTray(shuffled);

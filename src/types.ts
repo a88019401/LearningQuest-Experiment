@@ -1,7 +1,8 @@
 export type UnitId = 1 | 2 | 3 | 4 | 5 | 6;
 
 
-export type Word = { term: string; def: string; example?: string | { en: string; zh: string } };
+export type Word = { term: string; def: string;   note?: string;
+example?: string | { en: string; zh: string } };
 
 
 export type GrammarPoint = {

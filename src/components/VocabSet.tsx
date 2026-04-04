@@ -203,9 +203,19 @@ export default function VocabSet({ title, words, onPlayAudio, onStudied }: Props
                     </div>
 
                     <div className="text-sm font-medium leading-relaxed text-slate-200">
-                      {w.def}
+                      {w.def} 
                     </div>
 
+  {w.note && (
+    <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2">
+      <div className="text-[10px] text-amber-300 uppercase tracking-wider mb-1">
+        Note
+      </div>
+      <div className="text-xs text-amber-100 leading-relaxed">
+        {w.note}
+      </div>
+    </div>
+  )}
                     {w.example && (
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <div className="text-[10px] text-indigo-400 uppercase tracking-wider mb-1">
