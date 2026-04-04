@@ -577,7 +577,7 @@ export default function App() {
 }
 function LearningQuestApp() {
   // 頁籤 / 視圖狀態
-const { signOut, user, profile } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const [tab, setTab] = useState<Tab>("learn");
   const [unitId] = useState<UnitId>(1);
   const [sub, setSub] = useState<LearnSubTab>(null);
@@ -613,8 +613,7 @@ const { signOut, user, profile } = useAuth();
   >([]);
 
   // 用來管理計時器，避免記憶體洩漏
-  const timersRef = useRef<Set<NodeJS.Timeout>>(new Set());
-
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   // 1. 監聽新事件並加入 Toast 列表
   useEffect(() => {
     const events = progress.lastBadgeEvents ?? [];
@@ -835,15 +834,15 @@ const { signOut, user, profile } = useAuth();
 
       <header className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-20">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg text-white font-bold text-2xl flex-shrink-0">
-            L
+<div className="min-w-[3.5rem] h-12 px-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg text-white font-extrabold text-lg sm:text-xl leading-none tracking-tight flex-shrink-0">
+            A++
           </div>
           <div>
             <div className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-              英文遊戲學習平台
+              會考英文總複習
             </div>
             <div className="text-sm font-medium text-neutral-500/80">
-              可模組化英語學習 · 遊戲化體驗 · {UNITS.length} 單元
+              取得獎章、登上排行榜！想辦法全破挑戰區吧！　
             </div>
           </div>
         </div>

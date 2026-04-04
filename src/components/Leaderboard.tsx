@@ -52,7 +52,7 @@ export default function Leaderboard() {
 
   const gameTitles = {
     snake: '🐍 貪吃蛇排行榜 (Top 10)',
-    tetris: '🧱 俄羅斯方塊排行榜 (Top 10)',
+    tetris: '🧱 方塊排行榜 (Top 10)',
   };
 
   const gameDescs = {
@@ -70,7 +70,7 @@ export default function Leaderboard() {
           貪吃蛇
         </TabButton>
         <TabButton active={activeGame === 'tetris'} onClick={() => setActiveGame('tetris')}>
-          俄羅斯方塊
+          方塊
         </TabButton>
       </div>
 
