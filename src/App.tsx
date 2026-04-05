@@ -293,9 +293,9 @@ function ResultModal({
                       : `${letter(it.pickedIndex)}. ${
                           it.choices[it.pickedIndex]
                         }`;
-                  const correct = `${letter(it.correctIndex)}. ${
+                  /*const correct = `${letter(it.correctIndex)}. ${
                     it.choices[it.correctIndex]
-                  }`;
+                  }`;*/
                   return (
                     <div
                       key={it.id ?? `i-${i}`}
@@ -321,7 +321,7 @@ function ResultModal({
                       </div>*/}
                       {it.explain && (
                         <div className="mt-1 text-sm text-neutral-700">
-                          提示：{it.explain}
+                          詳解：{it.explain}
                         </div>
                       )}
                       {it.tag && (
