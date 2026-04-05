@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 5"
+  },
+  "questions": [
+    {
+      "id": "u1-l5-q01",
+      "prompt": "Do you ____ opening the window? It’s a little hot in here.",
+      "choices": [
+        "mind",
+        "miss",
+        "repeat",
+        "study"
+      ],
+      "correctIndex": 0,
+      "explain": "Do you mind + V-ing...? 是固定句型，表示「你介意……嗎？」",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l5-q02",
+      "prompt": "I was very tired, ____ I went to bed early.",
+      "choices": [
+        "because",
+        "until",
+        "so",
+        "although"
+      ],
+      "correctIndex": 2,
+      "explain": "前因後果，結果句用 so。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l5-q03",
+      "prompt": "The song ____ by a famous singer last year.",
+      "choices": [
+        "was sung",
+        "was sang",
+        "sung",
+        "is sang"
+      ],
+      "correctIndex": 0,
+      "explain": "sing 的過去分詞是 sung，不是 sang。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l5-q04",
+      "prompt": "After dinner, Kevin went back to his ____ to finish his homework quietly.",
+      "choices": [
+        "study",
+        "country",
+        "sign",
+        "row"
+      ],
+      "correctIndex": 0,
+      "explain": "這裡的 study 是名詞，表示「書房」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l5-q05",
+      "prompt": "Tina likes PE, and ____ do I.",
+      "choices": [
+        "too",
+        "so",
+        "either",
+        "neither"
+      ],
+      "correctIndex": 1,
+      "explain": "likes 是一般動詞，所以附和時要借助 do，正確結構是 so do I。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l5-q06",
+      "prompt": "The ____ by the river says “No Swimming.”",
+      "choices": [
+        "sign",
+        "sight",
+        "power",
+        "item"
+      ],
+      "correctIndex": 0,
+      "explain": "河邊寫著禁止游泳的「標誌」是 sign。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l5-q07",
+      "prompt": "Cindy can both ____ and dance.",
+      "choices": [
+        "sings",
+        "sing",
+        "singing",
+        "sang"
+      ],
+      "correctIndex": 1,
+      "explain": "can 後面接原形動詞，而且 both...and... 兩邊要平行，所以是 sing and dance。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l5-q08",
+      "prompt": "She likes neither coffee ____ tea.",
+      "choices": [
+        "and",
+        "but",
+        "or",
+        "nor"
+      ],
+      "correctIndex": 3,
+      "explain": "固定搭配是 neither...nor...。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l5-q09",
+      "prompt": "Dark clouds are often a ____ that rain is coming.",
+      "choices": [
+        "row",
+        "package",
+        "sign",
+        "grade"
+      ],
+      "correctIndex": 2,
+      "explain": "烏雲是下雨的「徵兆」，所以選 sign。這裡考 sign 的另一個意思。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l5-q10",
+      "prompt": "She not only cooked dinner ____ cleaned the kitchen.",
+      "choices": [
+        "and",
+        "but also",
+        "or",
+        "so"
+      ],
+      "correctIndex": 1,
+      "explain": "固定句型是 not only...but also...。",
+      "tag": "grammar"
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 8"
+  },
+  "questions": [
+    {
+      "id": "u1-l8-q01",
+      "prompt": "The mailman left a ____ at the front door this morning.",
+      "choices": [
+        "package",
+        "grade",
+        "sign",
+        "row"
+      ],
+      "correctIndex": 0,
+      "explain": "郵差送來的是「包裹」，所以選 package。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l8-q02",
+      "prompt": "The dog ____ to the hospital after the accident.",
+      "choices": [
+        "was taken",
+        "was took",
+        "taken was",
+        "is took"
+      ],
+      "correctIndex": 0,
+      "explain": "take 的過去分詞是 taken，所以被動過去式是 was taken。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l8-q03",
+      "prompt": "Many trees ____ in this park in the past two years.",
+      "choices": [
+        "have planted",
+        "have been planted",
+        "had planted",
+        "were been planted"
+      ],
+      "correctIndex": 1,
+      "explain": "表示「過去兩年已經被種下很多樹」，要用現在完成式被動 have been planted。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l8-q04",
+      "prompt": "You may sit on ____ side of the table. Both seats are fine.",
+      "choices": [
+        "every",
+        "either",
+        "neither",
+        "all"
+      ],
+      "correctIndex": 1,
+      "explain": "兩者之中「任一邊都可以」要用 either。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l8-q05",
+      "prompt": "My grandmother takes care ____ my little cousin after school.",
+      "choices": [
+        "with",
+        "for",
+        "of",
+        "to"
+      ],
+      "correctIndex": 2,
+      "explain": "take care of 是固定片語，表示「照顧」。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l8-q06",
+      "prompt": "I checked both answers, but ____ of them was right.",
+      "choices": [
+        "either",
+        "both",
+        "neither",
+        "all"
+      ],
+      "correctIndex": 2,
+      "explain": "兩個答案都不對，要用 neither。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l8-q07",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Mina can dance, and so I can.",
+        "Mina can dance, and so can I.",
+        "Mina can dance, and I so can.",
+        "Mina can dance, and can so I."
+      ],
+      "correctIndex": 1,
+      "explain": "so 放句首附和時，標準句型是 so + 助動詞 + 主詞。so I can 是忘記倒裝的典型錯誤。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l8-q08",
+      "prompt": "____ she was walking home, it began to rain.",
+      "choices": [
+        "While",
+        "Because",
+        "So",
+        "Until"
+      ],
+      "correctIndex": 0,
+      "explain": "walking home 是持續中的動作，所以用 While。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l8-q09",
+      "prompt": "The team won three games in a ____, so everyone was excited.",
+      "choices": [
+        "row",
+        "country",
+        "package",
+        "course"
+      ],
+      "correctIndex": 0,
+      "explain": "in a row 是固定片語，表示「連續地」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l8-q10",
+      "prompt": "That is the house ____ he grew up.",
+      "choices": [
+        "where",
+        "who",
+        "whose",
+        "which"
+      ],
+      "correctIndex": 0,
+      "explain": "「他在那棟房子裡長大」是地點概念，所以用 where。若改用 which，必須寫成 which he grew up in。",
+      "tag": "grammar"
+    }
+  ]
+}

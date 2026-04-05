@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 6"
+  },
+  "questions": [
+    {
+      "id": "u1-l6-q01",
+      "prompt": "My grandparents enjoy living in the ____ because the air is fresher there.",
+      "choices": [
+        "country",
+        "course",
+        "row",
+        "power"
+      ],
+      "correctIndex": 0,
+      "explain": "in the country 指「在鄉下」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l6-q02",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Because it was late, so we went home.",
+        "Because it was late, we went home.",
+        "Although it was late, so we went home.",
+        "Because was it late, we went home."
+      ],
+      "correctIndex": 1,
+      "explain": "because 和 so 不能在同一句裡一起用來連接同一組因果。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l6-q03",
+      "prompt": "The windows must ____ before the guests arrive.",
+      "choices": [
+        "clean",
+        "be cleaned",
+        "cleaned",
+        "be clean"
+      ],
+      "correctIndex": 1,
+      "explain": "情態助動詞後的被動語態是 must be + p.p.，所以用 be cleaned。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l6-q04",
+      "prompt": "Japan is a country in Asia. Here, country means “____.”",
+      "choices": [
+        "countryside",
+        "nation",
+        "field",
+        "village"
+      ],
+      "correctIndex": 1,
+      "explain": "這裡 country 指的是「國家」，所以是 nation。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l6-q05",
+      "prompt": "He hates ____ at by others.",
+      "choices": [
+        "laugh",
+        "to laugh",
+        "being laughed",
+        "be laughed"
+      ],
+      "correctIndex": 2,
+      "explain": "hate 後面可接 V-ing；若是被動，就變成 being + p.p.，所以是 being laughed at。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l6-q06",
+      "prompt": "The night view from the mountain was an amazing ____.",
+      "choices": [
+        "sight",
+        "sign",
+        "item",
+        "grade"
+      ],
+      "correctIndex": 0,
+      "explain": "amazing sight = 驚人的景象。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l6-q07",
+      "prompt": "I didn’t know this word, so I looked ____ in the dictionary.",
+      "choices": [
+        "up it",
+        "it up",
+        "for it up",
+        "it for up"
+      ],
+      "correctIndex": 1,
+      "explain": "look up 是可分片語，代名詞 it 也要放中間，所以是 looked it up。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l6-q08",
+      "prompt": "Eric didn’t join the club, and ____ did his brother.",
+      "choices": [
+        "too",
+        "so",
+        "either",
+        "neither"
+      ],
+      "correctIndex": 3,
+      "explain": "這裡是否定附和，所以用 neither did his brother。either 通常放句尾。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l6-q09",
+      "prompt": "Grandpa’s ____ is not very good, so he needs glasses when reading.",
+      "choices": [
+        "sight",
+        "row",
+        "course",
+        "deal"
+      ],
+      "correctIndex": 0,
+      "explain": "這裡 sight 指「視力」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l6-q10",
+      "prompt": "The lights went out ____ we were having dinner.",
+      "choices": [
+        "because",
+        "while",
+        "when",
+        "so"
+      ],
+      "correctIndex": 2,
+      "explain": "停電是短動作，正在吃飯是長動作，所以要用 when。",
+      "tag": "grammar"
+    }
+  ]
+}

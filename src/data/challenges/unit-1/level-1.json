@@ -1,85 +1,138 @@
 {
-  "meta": { "time": 60, "title": "Unit 1 • Level 1" },
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 1"
+  },
   "questions": [
     {
       "id": "u1-l1-q01",
-      "prompt": "Lynn: Does Brian play dodge ball every Sunday?  Tina: Yes, ____.",
-      "choices": ["he is", "he isn’t", "he does", "he doesn’t"],
-      "correctIndex": 2,
-      "explain": "肯定簡答要用助動詞：Yes, he does.",
-      "tag": "grammar"
+      "prompt": "Jenny never dares to speak first in front of new classmates. She is very ____.",
+      "choices": [
+        "shy",
+        "tidy",
+        "national",
+        "correct"
+      ],
+      "correctIndex": 0,
+      "explain": "題幹說她在新同學面前不敢先開口，表示她很「害羞」，所以選 shy。tidy 是整齊的；national 是國家的；correct 是正確的。",
+      "tag": "vocab"
     },
     {
       "id": "u1-l1-q02",
-      "prompt": "Ann: ____ your mother a housewife?  Sue: Yes, ____.",
-      "choices": ["Are; I am", "Is; she is", "Am; you are", "Is; he is"],
+      "prompt": "I will wait here ____ you come back.",
+      "choices": [
+        "because",
+        "until",
+        "so",
+        "although"
+      ],
       "correctIndex": 1,
-      "explain": "問句主詞是 your mother（第三人稱單數），用 Is；答句用 she 代替。",
+      "explain": "wait until... = 等到……為止。",
       "tag": "grammar"
     },
     {
       "id": "u1-l1-q03",
-      "prompt": "Amy: Are Ben and his brother students?  Bella: Ben is, but his brother ____.",
-      "choices": ["is", "are", "isn’t", "aren’t"],
-      "correctIndex": 2,
-      "explain": "前面肯定 Ben 是；後句是否定『他哥哥不是』→ isn’t。",
+      "prompt": "The classroom ____ by the students yesterday.",
+      "choices": [
+        "cleaned",
+        "was cleaned",
+        "was cleaning",
+        "has clean"
+      ],
+      "correctIndex": 1,
+      "explain": "教室是「被打掃」，要用被動語態 was cleaned。少了 be 動詞是最常見錯誤。",
       "tag": "grammar"
     },
     {
       "id": "u1-l1-q04",
-      "prompt": "Peggy: Is Scott’s uncle a police officer?  Neil: ____  He’s an office worker.",
-      "choices": ["No, she isn’t.", "No, he isn’t.", "Yes, she is.", "Yes, he is."],
-      "correctIndex": 1,
-      "explain": "敘述指出他是上班族而不是警察→否定且主詞 he：No, he isn’t.",
-      "tag": "grammar"
+      "prompt": "Kevin’s parents work in another city, so he often feels ____ at night.",
+      "choices": [
+        "lonely",
+        "powerful",
+        "careful",
+        "noisy"
+      ],
+      "correctIndex": 0,
+      "explain": "一個人晚上常常感到孤單，應選 lonely。注意 lonely 是情緒上的寂寞，不只是單獨一人。",
+      "tag": "vocab"
     },
     {
       "id": "u1-l1-q05",
-      "prompt": "Nigel has thin lips, but his daughter ____.",
-      "choices": ["do", "don’t", "does", "doesn’t"],
-      "correctIndex": 3,
-      "explain": "主詞 his daughter（第三人稱單數），否定用 doesn’t。",
+      "prompt": "Amy can sing very well, and ____ can her sister.",
+      "choices": [
+        "too",
+        "so",
+        "either",
+        "neither"
+      ],
+      "correctIndex": 1,
+      "explain": "句首肯定附和要用 so + 助動詞/be動詞 + 主詞，所以是 so can her sister。too 通常放句尾；either / neither 用在否定附和。",
       "tag": "grammar"
     },
     {
       "id": "u1-l1-q06",
-      "prompt": "Zac: Hi. I’m Zac. Nice to meet you.  Elsa: Hi. I’m Elsa. ____",
-      "choices": ["I’m fine. Thank you.", "Nice to meet you, too.", "Yeah. She is beautiful.", "It is a new pen."],
+      "prompt": "Amy and I only had one umbrella, so we made a ____ to walk home together.",
+      "choices": [
+        "row",
+        "deal",
+        "sight",
+        "grade"
+      ],
       "correctIndex": 1,
-      "explain": "對應寒暄句型：Nice to meet you, too.",
-      "tag": "dialog"
+      "explain": "make a deal 表示「講好、一言為定」，最符合情境。row 是排；sight 是景象；grade 是年級或成績。",
+      "tag": "vocab"
     },
     {
       "id": "u1-l1-q07",
-      "prompt": "Henry: ____  Alice: I’m 165 centimeters tall.",
-      "choices": ["Are you 165 centimeters tall?", "Are you very tall?", "How tall are you?", "Do you have long legs?"],
-      "correctIndex": 2,
-      "explain": "問『身高多少』要用 How tall...?",
-      "tag": "dialog"
+      "prompt": "Either you or Kevin ____ the key.",
+      "choices": [
+        "have",
+        "has",
+        "are",
+        "were"
+      ],
+      "correctIndex": 1,
+      "explain": "either...or... 連接主詞時，動詞看靠近的主詞。Kevin 是單數，所以用 has。",
+      "tag": "grammar"
     },
     {
       "id": "u1-l1-q08",
-      "prompt": "Ian is one hundred and eighty centimeters tall. He is good at playing basketball, so he ____.",
-      "choices": ["has small eyes", "is on the school team", "studies English every day", "plays music"],
+      "prompt": "Both Kevin and his sister ____ at home now.",
+      "choices": [
+        "is",
+        "are",
+        "was",
+        "has"
+      ],
       "correctIndex": 1,
-      "explain": "身高高、球打得好 → 合理推論在校隊：is on the school team。",
-      "tag": "dialog"
+      "explain": "both A and B 連接兩個主詞時，一律視為複數，所以用 are。",
+      "tag": "grammar"
     },
     {
       "id": "u1-l1-q09",
-      "prompt": "Stephen Curry is a great NBA player from the USA, and ____. Everyone likes him.",
-      "choices": ["he’s good at playing basketball", "he paints every day", "you can say that again", "look at that boy"],
-      "correctIndex": 0,
-      "explain": "承接前句描述球員 → 他很擅長打籃球。",
-      "tag": "dialog"
+      "prompt": "Taroko is a ____ park in Taiwan, and many people visit it every year.",
+      "choices": [
+        "shy",
+        "national",
+        "lonely",
+        "tidy"
+      ],
+      "correctIndex": 1,
+      "explain": "national park 是固定用法，表示「國家公園」，所以選 national。",
+      "tag": "vocab"
     },
     {
       "id": "u1-l1-q10",
-      "prompt": "Ken: Who is young and handsome?  Bill: ____.",
-      "choices": ["Our new teacher, Mr. Chen, is.", "Isn’t that Mr. Chen?", "Mr. Chen isn’t.", "Our sister, Lisa, is."],
-      "correctIndex": 0,
-      "explain": "Wh- 問『誰』當主詞；答案用名詞片語 + is：Our new teacher, Mr. Chen, is.",
-      "tag": "dialog"
+      "prompt": "Not only Amy but also her friends ____ here.",
+      "choices": [
+        "is",
+        "are",
+        "was",
+        "has"
+      ],
+      "correctIndex": 1,
+      "explain": "not only A but also B 連接主詞時，動詞看靠近的主詞 B。her friends 是複數，所以用 are。",
+      "tag": "grammar"
     }
   ]
 }

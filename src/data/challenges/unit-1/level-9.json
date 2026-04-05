@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 9"
+  },
+  "questions": [
+    {
+      "id": "u1-l9-q01",
+      "prompt": "Moon Festival is a ____ holiday in Taiwan.",
+      "choices": [
+        "national",
+        "shy",
+        "correct",
+        "lonely"
+      ],
+      "correctIndex": 0,
+      "explain": "national holiday = 國定假日。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l9-q02",
+      "prompt": "The boy ____ father is a doctor is my classmate.",
+      "choices": [
+        "who",
+        "where",
+        "whose",
+        "which"
+      ],
+      "correctIndex": 2,
+      "explain": "father 前面要有「誰的」，所以用 whose father。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l9-q03",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Both my father and my mother is busy.",
+        "Both my father and my mother are busy.",
+        "Both my father and my mother was busy.",
+        "Both my father and my mother has been busy."
+      ],
+      "correctIndex": 1,
+      "explain": "both A and B 一定接複數動詞，所以現在式用 are。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l9-q04",
+      "prompt": "Would you ____ turning down the music? I’m doing my homework.",
+      "choices": [
+        "correct",
+        "mind",
+        "repeat",
+        "miss"
+      ],
+      "correctIndex": 1,
+      "explain": "Would you mind + V-ing...? 表示「你介意……嗎？」",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l9-q05",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Although he was hungry, but he didn’t eat.",
+        "Although he was hungry, he didn’t eat.",
+        "He was hungry, although but he didn’t eat.",
+        "Although was he hungry, he didn’t eat."
+      ],
+      "correctIndex": 1,
+      "explain": "although 和 but 不能同時並用。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l9-q06",
+      "prompt": "Good teachers have the ____ to change students’ lives.",
+      "choices": [
+        "power",
+        "grade",
+        "item",
+        "sight"
+      ],
+      "correctIndex": 0,
+      "explain": "這裡 power 指「影響力、力量」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l9-q07",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Either Amy or I is wrong.",
+        "Either Amy or I am wrong.",
+        "Either Amy or I are wrong.",
+        "Either Amy or I be wrong."
+      ],
+      "correctIndex": 1,
+      "explain": "靠近動詞的是 I，所以要用 am。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l9-q08",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Not only you but also he are ready.",
+        "Not only you but also he is ready.",
+        "Not only you but also he am ready.",
+        "Not only you but also he be ready."
+      ],
+      "correctIndex": 1,
+      "explain": "動詞看靠近的主詞 he，所以用 is。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l9-q09",
+      "prompt": "Mom bought one ____ of cookies for the picnic.",
+      "choices": [
+        "course",
+        "package",
+        "row",
+        "sign"
+      ],
+      "correctIndex": 1,
+      "explain": "a package of cookies 表示一包餅乾。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l9-q10",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "The homework finished last night.",
+        "The homework was finished last night.",
+        "The homework was finish last night.",
+        "The homework has finishing last night."
+      ],
+      "correctIndex": 1,
+      "explain": "作業是被完成，所以用 was finished。finish 不是過去分詞。",
+      "tag": "grammar"
+    }
+  ]
+}

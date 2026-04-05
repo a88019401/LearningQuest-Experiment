@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 2"
+  },
+  "questions": [
+    {
+      "id": "u1-l2-q01",
+      "prompt": "Because Cathy is short, the teacher let her sit in the first ____.",
+      "choices": [
+        "row",
+        "course",
+        "item",
+        "sign"
+      ],
+      "correctIndex": 0,
+      "explain": "教室裡的第一「排」要用 row。course 是課程；item 是項目；sign 是標誌。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l2-q02",
+      "prompt": "____ it rains tomorrow, we will stay at home.",
+      "choices": [
+        "Because",
+        "Until",
+        "If",
+        "Although"
+      ],
+      "correctIndex": 2,
+      "explain": "這是條件句，「如果明天下雨」。注意 if 子句裡用 rains，不是 will rain。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l2-q03",
+      "prompt": "The bridge will ____ next year.",
+      "choices": [
+        "build",
+        "be built",
+        "built",
+        "be build"
+      ],
+      "correctIndex": 1,
+      "explain": "未來式被動語態是 will be + p.p.，所以要選 be built。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l2-q04",
+      "prompt": "My brother is in the ninth ____, so he will graduate from junior high this year.",
+      "choices": [
+        "power",
+        "sight",
+        "grade",
+        "package"
+      ],
+      "correctIndex": 2,
+      "explain": "ninth grade 是九年級，所以選 grade。這裡考的是 grade 的「年級」意思。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l2-q05",
+      "prompt": "Leo was tired after the game, and I was, ____.",
+      "choices": [
+        "too",
+        "so",
+        "either",
+        "neither"
+      ],
+      "correctIndex": 0,
+      "explain": "句尾肯定附和用 too，所以是 I was, too. so 若放句首就要倒裝。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l2-q06",
+      "prompt": "Linda got a perfect ____ on her English test, so she was very happy.",
+      "choices": [
+        "grade",
+        "row",
+        "sign",
+        "country"
+      ],
+      "correctIndex": 0,
+      "explain": "考試拿滿分，是得到很好的「成績」，所以選 grade。這題考 grade 的另一個意思。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l2-q07",
+      "prompt": "Neither my mom nor my sisters ____ at home now.",
+      "choices": [
+        "is",
+        "was",
+        "are",
+        "has"
+      ],
+      "correctIndex": 2,
+      "explain": "靠近動詞的是 my sisters，複數，所以用 are。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l2-q08",
+      "prompt": "I was taking a shower ____ the phone rang.",
+      "choices": [
+        "when",
+        "while",
+        "because",
+        "until"
+      ],
+      "correctIndex": 0,
+      "explain": "電話突然響是短動作，所以用 when。不能只看前面有 was taking 就選 while。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l2-q09",
+      "prompt": "Andy got up late and ____ the school bus this morning.",
+      "choices": [
+        "missed",
+        "studied",
+        "corrected",
+        "repeated"
+      ],
+      "correctIndex": 0,
+      "explain": "晚起導致「錯過」校車，missed 最自然。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l2-q10",
+      "prompt": "Mr. Lin is both kind ____ patient.",
+      "choices": [
+        "and",
+        "but",
+        "or",
+        "nor"
+      ],
+      "correctIndex": 0,
+      "explain": "固定搭配是 both...and...。",
+      "tag": "grammar"
+    }
+  ]
+}

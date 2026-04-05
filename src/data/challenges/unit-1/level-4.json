@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 4"
+  },
+  "questions": [
+    {
+      "id": "u1-l4-q01",
+      "prompt": "The lights went out because the ____ was off in the whole building.",
+      "choices": [
+        "power",
+        "course",
+        "deal",
+        "sight"
+      ],
+      "correctIndex": 0,
+      "explain": "停電時要用 power 表示「電力」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l4-q02",
+      "prompt": "We stayed home ____ it was raining heavily.",
+      "choices": [
+        "because",
+        "although",
+        "until",
+        "so"
+      ],
+      "correctIndex": 0,
+      "explain": "待在家裡的原因是雨下很大，所以用 because。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l4-q03",
+      "prompt": "The cookies ____ this morning, so they still smell great.",
+      "choices": [
+        "made",
+        "were made",
+        "were making",
+        "have make"
+      ],
+      "correctIndex": 1,
+      "explain": "餅乾是「被做出來」，用被動語態 were made。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l4-q04",
+      "prompt": "Everyone has the ____ to help others in some way.",
+      "choices": [
+        "grade",
+        "power",
+        "row",
+        "item"
+      ],
+      "correctIndex": 1,
+      "explain": "這裡的 power 是「能力、力量」，不是電力。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l4-q05",
+      "prompt": "Kelly isn’t ready, and ____ is her partner.",
+      "choices": [
+        "too",
+        "so",
+        "either",
+        "neither"
+      ],
+      "correctIndex": 3,
+      "explain": "句首否定附和要用 neither + be動詞/助動詞 + 主詞，所以是 neither is her partner。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l4-q06",
+      "prompt": "This history ____ is popular because the teacher tells stories in class.",
+      "choices": [
+        "package",
+        "sign",
+        "course",
+        "country"
+      ],
+      "correctIndex": 2,
+      "explain": "history course 是歷史課程，所以選 course。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l4-q07",
+      "prompt": "It’s too dark in here. Please turn ____.",
+      "choices": [
+        "on it",
+        "it on",
+        "it up on",
+        "on up it"
+      ],
+      "correctIndex": 1,
+      "explain": "turn on 是可分片語，受詞若是代名詞 it，一定要放中間，所以是 turn it on。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l4-q08",
+      "prompt": "____ Mom was cooking, I was setting the table.",
+      "choices": [
+        "When",
+        "While",
+        "Because",
+        "Until"
+      ],
+      "correctIndex": 1,
+      "explain": "while 常用來表示兩個持續中的動作同時進行，所以用 While。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l4-q09",
+      "prompt": "We followed a different ____ home because the main road was too crowded.",
+      "choices": [
+        "course",
+        "grade",
+        "sight",
+        "deal"
+      ],
+      "correctIndex": 0,
+      "explain": "這裡 course 不是課程，而是「路線」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l4-q10",
+      "prompt": "This is the shop ____ I bought the bag.",
+      "choices": [
+        "who",
+        "whose",
+        "where",
+        "which"
+      ],
+      "correctIndex": 2,
+      "explain": "shop 是地點，而且後面 I bought the bag 結構完整，所以用 where 表示「在那家店」。若要用 which，必須改成 which I bought the bag in 或 in which I bought the bag。",
+      "tag": "grammar"
+    }
+  ]
+}

@@ -1239,7 +1239,12 @@ const mkUnit = (
 ========================= */
 
 export const UNITS: UnitConfig[] = [
-  mkUnit(1, "Unit 1: 現在簡單式", {
+  /*mkUnit(1, "Unit 1: 現在簡單式", {
+    words: UNIT1_WORDS,
+    grammar: UNIT1_GRAMMAR,
+    story: UNIT1_STORY,
+  }),*/
+  mkUnit(1, "國中第六冊會考複習", {
     words: UNIT1_WORDS,
     grammar: UNIT1_GRAMMAR,
     story: UNIT1_STORY,

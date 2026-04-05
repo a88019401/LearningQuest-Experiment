@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 3"
+  },
+  "questions": [
+    {
+      "id": "u1-l3-q01",
+      "prompt": "I really ____ my grandmother when I stay away from home for too long.",
+      "choices": [
+        "miss",
+        "power",
+        "tidy",
+        "sign"
+      ],
+      "correctIndex": 0,
+      "explain": "這裡 miss 是「想念」，不是「錯過」。要靠上下文判斷字義。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l3-q02",
+      "prompt": "____ he was sick, he still came to school.",
+      "choices": [
+        "Because",
+        "Although",
+        "So",
+        "Until"
+      ],
+      "correctIndex": 1,
+      "explain": "前後意思相反：雖然生病，還是來上學，所以用 Although。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l3-q03",
+      "prompt": "English ____ in many countries around the world.",
+      "choices": [
+        "speaks",
+        "is spoken",
+        "was speak",
+        "spoken"
+      ],
+      "correctIndex": 1,
+      "explain": "英文是「被說」的語言，所以要用 is spoken。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l3-q04",
+      "prompt": "The pizza is ____ big. I don’t think the five of us can finish it.",
+      "choices": [
+        "either",
+        "quite",
+        "neither",
+        "only"
+      ],
+      "correctIndex": 1,
+      "explain": "quite big 表示「相當大」，語意最通順。either 和 neither 不用來修飾 big。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l3-q05",
+      "prompt": "Ben doesn’t like math, and I don’t, ____.",
+      "choices": [
+        "too",
+        "so",
+        "either",
+        "neither"
+      ],
+      "correctIndex": 2,
+      "explain": "否定句句尾附和用 either。too 只用在肯定附和。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l3-q06",
+      "prompt": "Peter got many answers wrong, so the teacher asked him to ____ them.",
+      "choices": [
+        "repeat",
+        "miss",
+        "correct",
+        "mind"
+      ],
+      "correctIndex": 2,
+      "explain": "題目答錯很多，老師會叫他「更正」答案，所以選 correct。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l3-q07",
+      "prompt": "We can either ____ at home or go to the movie theater.",
+      "choices": [
+        "stayed",
+        "staying",
+        "stay",
+        "to stay"
+      ],
+      "correctIndex": 2,
+      "explain": "can 後面要接原形動詞，且 either...or... 兩邊要平行，所以是 stay / go。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l3-q08",
+      "prompt": "Not only the students but also the teacher ____ surprised by the news.",
+      "choices": [
+        "are",
+        "were",
+        "is",
+        "have"
+      ],
+      "correctIndex": 2,
+      "explain": "靠近動詞的是 the teacher，單數，所以用 is。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l3-q09",
+      "prompt": "Your answer is ____. You can go on to the next question.",
+      "choices": [
+        "correct",
+        "lonely",
+        "national",
+        "shy"
+      ],
+      "correctIndex": 0,
+      "explain": "這裡 correct 是形容詞，表示「正確的」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l3-q10",
+      "prompt": "She wants ____ to the party this Saturday.",
+      "choices": [
+        "invite",
+        "invited",
+        "to be invited",
+        "being invited"
+      ],
+      "correctIndex": 2,
+      "explain": "want 後面若表示「想被邀請」，要用 to be invited。",
+      "tag": "grammar"
+    }
+  ]
+}

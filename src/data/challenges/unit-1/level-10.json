@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 10"
+  },
+  "questions": [
+    {
+      "id": "u1-l10-q01",
+      "prompt": "“Cheesecake” is my favorite ____ on the dessert menu.",
+      "choices": [
+        "sight",
+        "item",
+        "power",
+        "country"
+      ],
+      "correctIndex": 1,
+      "explain": "菜單上的一道品項要用 item。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l10-q02",
+      "prompt": "He was made ____ outside for thirty minutes.",
+      "choices": [
+        "wait",
+        "to wait",
+        "waiting",
+        "waited"
+      ],
+      "correctIndex": 1,
+      "explain": "主動是 make sb. wait，但被動時要補回 to，變成 be made to wait。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l10-q03",
+      "prompt": "We need to deal ____ this problem before it gets worse.",
+      "choices": [
+        "to",
+        "with",
+        "for",
+        "on"
+      ],
+      "correctIndex": 1,
+      "explain": "deal with 表示「處理、應付」。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l10-q04",
+      "prompt": "Our classroom looks much better now because everyone helped keep it ____.",
+      "choices": [
+        "tidy",
+        "lonely",
+        "national",
+        "shy"
+      ],
+      "correctIndex": 0,
+      "explain": "教室變整齊了，所以選 tidy。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l10-q05",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "Jack doesn’t eat spicy food, and I don’t, either.",
+        "Jack doesn’t eat spicy food, and I either don’t.",
+        "Jack doesn’t eat spicy food, and either I don’t.",
+        "Jack doesn’t eat spicy food, and neither I do."
+      ],
+      "correctIndex": 0,
+      "explain": "否定句句尾附和最自然是 I don’t, either。若用 neither，應寫成 neither do I。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l10-q06",
+      "prompt": "Without my glasses, my ____ becomes poor and I can’t read the words on the board.",
+      "choices": [
+        "sight",
+        "sign",
+        "deal",
+        "package"
+      ],
+      "correctIndex": 0,
+      "explain": "看不清楚黑板字，表示「視力」不好，所以選 sight。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l10-q07",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "While the bus arrived, we were waiting.",
+        "When the bus arrived, we were waiting.",
+        "While the bus was arrived, we waited.",
+        "When the bus arriving, we were waiting."
+      ],
+      "correctIndex": 1,
+      "explain": "bus arrived 是短動作，所以應用 when。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l10-q08",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "This is the restaurant which my family had dinner last Sunday.",
+        "This is the restaurant where my family had dinner last Sunday.",
+        "This is the restaurant whose my family had dinner last Sunday.",
+        "This is the restaurant who my family had dinner last Sunday."
+      ],
+      "correctIndex": 1,
+      "explain": "後面 my family had dinner last Sunday 這個子句本身已經完整，缺的是「在那家餐廳」的地點概念，所以要用 where。若用 which，必須改成 which my family had dinner in last Sunday，或更正式地寫成 in which my family had dinner last Sunday。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l10-q09",
+      "prompt": "A: Let’s meet at the library at 3:00. B: It’s a ____.",
+      "choices": [
+        "country",
+        "deal",
+        "row",
+        "grade"
+      ],
+      "correctIndex": 1,
+      "explain": "It’s a deal. = 一言為定。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l10-q10",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "I know the woman who daughter studies in Japan.",
+        "I know the woman whose daughter studies in Japan.",
+        "I know the woman where daughter studies in Japan.",
+        "I know the woman which daughter studies in Japan."
+      ],
+      "correctIndex": 1,
+      "explain": "daughter 前面需要所有格，所以要用 whose。",
+      "tag": "grammar"
+    }
+  ]
+}

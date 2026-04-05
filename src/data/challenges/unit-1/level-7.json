@@ -1,0 +1,138 @@
+{
+  "meta": {
+    "time": 60,
+    "title": "Unit 1 • Level 7"
+  },
+  "questions": [
+    {
+      "id": "u1-l7-q01",
+      "prompt": "Please keep your desk clean and ____ before the teacher comes in.",
+      "choices": [
+        "tidy",
+        "lonely",
+        "national",
+        "correct"
+      ],
+      "correctIndex": 0,
+      "explain": "clean and tidy 是固定搭配，表示「乾淨又整齊」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l7-q02",
+      "prompt": "The park ____ we played basketball yesterday is near my house.",
+      "choices": [
+        "where",
+        "who",
+        "whose",
+        "which"
+      ],
+      "correctIndex": 0,
+      "explain": "park 是地點，後面 we played basketball yesterday 已經完整，所以用 where。若用 which，應改成 which we played basketball in。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l7-q03",
+      "prompt": "I know the girl ____ hair is pink.",
+      "choices": [
+        "who",
+        "whose",
+        "where",
+        "which"
+      ],
+      "correctIndex": 1,
+      "explain": "要表示「那個女孩的頭髮」，需要所有格關係代名詞 whose。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l7-q04",
+      "prompt": "Mom asked me to ____ my room before dinner.",
+      "choices": [
+        "shy",
+        "tidy",
+        "miss",
+        "sign"
+      ],
+      "correctIndex": 1,
+      "explain": "這裡 tidy 當動詞，表示「整理」。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l7-q05",
+      "prompt": "Both the teacher and the students ____ excited about the trip.",
+      "choices": [
+        "was",
+        "is",
+        "were",
+        "has"
+      ],
+      "correctIndex": 2,
+      "explain": "both A and B 視為複數，過去式要用 were。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l7-q06",
+      "prompt": "There are twelve ____ on the shopping list, but Dad bought only nine.",
+      "choices": [
+        "items",
+        "sights",
+        "powers",
+        "rows"
+      ],
+      "correctIndex": 0,
+      "explain": "購物清單上的一個一個項目要用 items。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l7-q07",
+      "prompt": "Which sentence is correct?",
+      "choices": [
+        "If it will rain tomorrow, we will cancel the game.",
+        "If it rains tomorrow, we will cancel the game.",
+        "If it rained tomorrow, we will cancel the game.",
+        "If it raining tomorrow, we will cancel the game."
+      ],
+      "correctIndex": 1,
+      "explain": "第一類條件句：If + 現在式, 主句 + will + 原形動詞。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l7-q08",
+      "prompt": "Neither you nor he ____ to go there tomorrow.",
+      "choices": [
+        "have",
+        "has",
+        "are",
+        "were"
+      ],
+      "correctIndex": 1,
+      "explain": "靠近動詞的是 he，所以用 has。",
+      "tag": "grammar"
+    },
+    {
+      "id": "u1-l7-q09",
+      "prompt": "I didn’t hear the last part. Could you ____ it, please?",
+      "choices": [
+        "correct",
+        "repeat",
+        "mind",
+        "miss"
+      ],
+      "correctIndex": 1,
+      "explain": "聽不清楚時，請對方再說一次，要用 repeat。",
+      "tag": "vocab"
+    },
+    {
+      "id": "u1-l7-q10",
+      "prompt": "I bought not only tea but also ____.",
+      "choices": [
+        "bread",
+        "bought bread",
+        "to buy bread",
+        "buying bread"
+      ],
+      "correctIndex": 0,
+      "explain": "tea 和 bread 都是 bought 的受詞，所以要保持平行，直接用 bread。",
+      "tag": "grammar"
+    }
+  ]
+}

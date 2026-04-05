@@ -29,14 +29,19 @@ import type { SnakeReport } from "./components/SnakeChallenge";
 // @ts-ignore
 import level1 from "./data/challenges/unit-1/level-1.json";
 
-/*// @ts-ignore 題目設定好之後開啟
+// @ts-ignore 題目設定好之後開啟
 import level2 from "./data/challenges/unit-1/level-2.json";
 // @ts-ignore
 import level3 from "./data/challenges/unit-1/level-3.json";
 // @ts-ignore
 import level4 from "./data/challenges/unit-1/level-4.json";
 // @ts-ignore
-import level5 from "./data/challenges/unit-1/level-5.json";*/
+import level5 from "./data/challenges/unit-1/level-5.json";
+import level6 from "./data/challenges/unit-1/level-6.json";
+import level7 from "./data/challenges/unit-1/level-7.json";
+import level8 from "./data/challenges/unit-1/level-8.json";
+import level9 from "./data/challenges/unit-1/level-9.json";
+import level10 from "./data/challenges/unit-1/level-10.json";
 import { useAuth } from "./state/AuthContext"; // <-- 匯入 useAuth
 import { supabase } from "./supabaseClient"; // <-- 匯入 supabase client
 import ProfileSetup from "./components/ProfileSetup";
@@ -67,7 +72,8 @@ type ChallengeItemResult = {
 const fixedU1L1: {
   meta?: { time?: number; title?: string };
   questions: MCQ[];
-} = level1; /* 預先載入，避免每次切換關卡才載入 
+} = level1;
+/* 預先載入，避免每次切換關卡才載入*/
 const fixedU1L2: {
   meta?: { time?: number; title?: string };
   questions: MCQ[];
@@ -83,7 +89,27 @@ const fixedU1L4: {
 const fixedU1L5: {
   meta?: { time?: number; title?: string };
   questions: MCQ[];
-} = level5;*/
+} = level5;
+const fixedU1L6: {
+  meta?: { time?: number; title?: string };
+  questions: MCQ[];
+} = level6;
+const fixedU1L7: {
+  meta?: { time?: number; title?: string };
+  questions: MCQ[];
+} = level7;
+const fixedU1L8: {
+  meta?: { time?: number; title?: string };
+  questions: MCQ[];
+} = level8;
+const fixedU1L9: {
+  meta?: { time?: number; title?: string };
+  questions: MCQ[];
+} = level9;
+const fixedU1L10: {
+  meta?: { time?: number; title?: string };
+  questions: MCQ[];
+} = level10;
 
 /* -----------------------------
    星等 / 解鎖規則
@@ -290,12 +316,12 @@ function ResultModal({
                       <div className="mt-1 text-sm">
                         你的作答：<span className="font-medium">{picked}</span>
                       </div>
-                      <div className="text-sm">
+                      {/*<div className="text-sm">
                         參考答案：<span className="font-medium">{correct}</span>
-                      </div>
+                      </div>*/}
                       {it.explain && (
                         <div className="mt-1 text-sm text-neutral-700">
-                          詳解：{it.explain}
+                          提示：{it.explain}
                         </div>
                       )}
                       {it.tag && (
@@ -834,7 +860,7 @@ function LearningQuestApp() {
 
       <header className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-20">
         <div className="flex items-center gap-3">
-<div className="min-w-[3.5rem] h-12 px-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg text-white font-extrabold text-lg sm:text-xl leading-none tracking-tight flex-shrink-0">
+          <div className="min-w-[3.5rem] h-12 px-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg text-white font-extrabold text-lg sm:text-xl leading-none tracking-tight flex-shrink-0">
             A++
           </div>
           <div>
@@ -1327,10 +1353,15 @@ function LearningQuestApp() {
                     ? (
                         {
                           1: fixedU1L1,
-                          /*2: fixedU1L2,
-                        3: fixedU1L3,
-                        4: fixedU1L4,
-                        5: fixedU1L5,*/
+                          2: fixedU1L2,
+                          3: fixedU1L3,
+                          4: fixedU1L4,
+                          5: fixedU1L5,
+                          6: fixedU1L6,
+                          7: fixedU1L7,
+                          8: fixedU1L8,
+                          9: fixedU1L9,
+                          10: fixedU1L10,
                         } as const
                       )[level]
                     : undefined
