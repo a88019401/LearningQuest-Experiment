@@ -6,6 +6,7 @@ import { makeChallengeSet } from "../lib/questionGen";
 import { useAuth } from "../state/AuthContext";
 import { logLSAEvent } from "../lib/analytics";
 import { LsaState } from "../lib/lsa-states";
+
 // ---- 題目/回顧型別（在這檔內就好，避免大改 types.ts）----
 export type MCQ = {
   id?: string;
@@ -24,6 +25,7 @@ export type RunReportItem = {
   pickedIndex: number | null; // null => 超時/未作答
   explain?: string;
   isCorrect: boolean;
+  tag?: string;
 };
 
 export type RunReport = { items: RunReportItem[] };
@@ -70,10 +72,11 @@ export default function ChallengeRun({
   onFinish,
 }: Props) {
   const { user, profile } = useAuth();
+  
   // 題庫
   const QUESTIONS: MCQ[] = useMemo(
     () => fixedSet?.questions ?? makeChallengeSet(unit, 10),
-    [unit.id, fixedSet]
+    [unit.id, fixedSet],
   );
 
   // 狀態
@@ -90,30 +93,53 @@ export default function ChallengeRun({
 
   const cur = QUESTIONS[idx];
 
+// 🌟 修正後的 finishRun 函式
+  function finishRun(finalScore: number, finalReport: RunReportItem[]) {
+    const used = Math.max(
+      1,
+      Math.round((Date.now() - startedAt.current) / 1000),
+    );
+    
+    // ✨ 紀錄 LSA 事件：挑戰結束
+    logLSAEvent(user?.id, profile?.full_name, LsaState.CHALLENGE_FINISH, {
+      unitId: unit.id,
+      level: fixedSet?.meta?.title || "random",
+      score: finalScore,
+      timeUsed: used,
+      // 🌟 新增：把詳細的作答紀錄（包含題目、學生選了什麼、對錯等）存進資料庫
+      items: finalReport 
+    });
+    
+    // 將最新的分數和紀錄送回父組件
+    onFinish(finalScore, used, { items: finalReport });
+  }
+
   // 超時 -> 直接記錄為未作答並進下一題 / 或結束
   useEffect(() => {
     if (!started) return;
     if (left === 0 && !reveal) {
       // 未作答記錄
-const item: RunReportItem = {
-  id: cur.id,
-  prompt: cur.prompt,
-  choices: cur.choices,
-  correctIndex: cur.correctIndex,
-  pickedIndex: null,
-  explain: cur.explain,
-  isCorrect: false,
-  // ★ 新增：把題目上的 tag 帶出來
-  // @ts-ignore
-  tag: (cur as any).tag,
-};
-      setReport((r) => [...r, item]);
+      const item: RunReportItem = {
+        id: cur.id,
+        prompt: cur.prompt,
+        choices: cur.choices,
+        correctIndex: cur.correctIndex,
+        pickedIndex: null,
+        explain: cur.explain,
+        isCorrect: false,
+        // @ts-ignore
+        tag: (cur as any).tag,
+      };
+      
+      // 🌟 提前組合出最新的紀錄陣列
+      const nextReport = [...report, item];
+      setReport(nextReport);
 
       setReveal(true);
-      // 稍微顯示一下正解色塊（跟點選行為一致）
+      // 稍微顯示一下正解色塊
       setTimeout(() => {
         if (idx + 1 >= QUESTIONS.length) {
-          finishRun();
+          finishRun(score, nextReport); // 🌟 把最新紀錄傳進去！（超時分數不變，傳原本的 score 即可）
         } else {
           setIdx((n) => n + 1);
           setSelectedIdx(null);
@@ -126,9 +152,9 @@ const item: RunReportItem = {
 
   function start() {
     const levelName = fixedSet?.meta?.title || "random_challenge";
-    logLSAEvent(user?.id, profile?.full_name, LsaState.CHALLENGE_START, { 
-      unitId: unit.id, 
-      level: levelName 
+    logLSAEvent(user?.id, profile?.full_name, LsaState.CHALLENGE_START, {
+      unitId: unit.id,
+      level: levelName,
     });
     setStarted(true);
     setIdx(0);
@@ -139,47 +165,40 @@ const item: RunReportItem = {
     startedAt.current = Date.now();
   }
 
-  function finishRun() {
-    const used = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
-    // ✨ 新增追蹤：挑戰結束
-    logLSAEvent(user?.id, profile?.full_name, LsaState.CHALLENGE_FINISH, {
-      unitId: unit.id,
-      level: fixedSet?.meta?.title || "random",
-      score: score, // 答對題數
-      timeUsed: used // 花費秒數
-    });
-    onFinish(score, used, { items: report });
-  }
-
   function choose(i: number) {
     if (!started || reveal) return;
     setSelectedIdx(i);
 
     const correct = i === cur.correctIndex;
-    if (correct) setScore((s) => s + 1);
+    
+    // 🌟 提前算好最新的分數
+    const nextScore = correct ? score + 1 : score;
+    if (correct) setScore(nextScore); 
 
     // 紀錄本題詳解
-const item: RunReportItem = {
-  id: cur.id,
-  prompt: cur.prompt,
-  choices: cur.choices,
-  correctIndex: cur.correctIndex,
-  pickedIndex: i,
-  explain: cur.explain,
-  isCorrect: correct,
-  // ★ 新增
-  // @ts-ignore
-  tag: (cur as any).tag,
-};
-    setReport((r) => [...r, item]);
+    const item: RunReportItem = {
+      id: cur.id,
+      prompt: cur.prompt,
+      choices: cur.choices,
+      correctIndex: cur.correctIndex,
+      pickedIndex: i,
+      explain: cur.explain,
+      isCorrect: correct,
+      // @ts-ignore
+      tag: (cur as any).tag,
+    };
+    
+    // 🌟 提前組合出最新的紀錄陣列
+    const nextReport = [...report, item];
+    setReport(nextReport);
 
-    // 顯示即時回饋：選到者紅或綠 & 正解一定綠
+    // 顯示即時回饋
     setReveal(true);
 
     setTimeout(() => {
       // 進下一題或結束
       if (idx + 1 >= QUESTIONS.length) {
-        finishRun();
+        finishRun(nextScore, nextReport); // 🌟 把最新資料傳進去！
       } else {
         setIdx((n) => n + 1);
         setSelectedIdx(null);
@@ -198,7 +217,9 @@ const item: RunReportItem = {
         {started ? (
           <div
             className={`px-3 py-1 rounded-xl text-sm font-semibold ${
-              left <= 5 ? "bg-red-100 text-red-700" : "bg-neutral-100 text-neutral-700"
+              left <= 5
+                ? "bg-red-100 text-red-700"
+                : "bg-neutral-100 text-neutral-700"
             }`}
           >
             ⏱ 剩餘 {left}s
@@ -227,9 +248,11 @@ const item: RunReportItem = {
                 "p-3 rounded-xl border text-left transition select-none focus:outline-none";
               if (reveal) {
                 if (isCorrect) {
-                  cls += " bg-green-50 border-green-400 ring-1 ring-green-300 animate-pulse";
+                  cls +=
+                    " bg-green-50 border-green-400 ring-1 ring-green-300 animate-pulse";
                 } else if (isPicked) {
-                  cls += " bg-red-50 border-red-400 ring-1 ring-red-300 animate-pulse";
+                  cls +=
+                    " bg-red-50 border-red-400 ring-1 ring-red-300 animate-pulse";
                 } else {
                   cls += " bg-white opacity-80";
                 }

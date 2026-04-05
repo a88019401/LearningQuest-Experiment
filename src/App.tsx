@@ -321,7 +321,7 @@ function ResultModal({
                       </div>*/}
                       {it.explain && (
                         <div className="mt-1 text-sm text-neutral-700">
-                          詳解：{it.explain}
+                          提示：{it.explain}
                         </div>
                       )}
                       {it.tag && (
