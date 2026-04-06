@@ -55,7 +55,7 @@ export const BADGE_QR: Record<string, { type: "participation" | "skill" | "encou
   REVIEWER: { type: "participation", thresholds: [2, 10, 20] },
   AUDIO_LEARNER: { type: "participation", thresholds: [10, 50, 100] },
   SNAKE_MASTER: { type: "skill", thresholds: [10, 30, 60] },
-  TETRIS_ARCH: { type: "skill", thresholds: [10, 40, 80] },
+  TETRIS_ARCH: { type: "skill", thresholds: [5, 10, 20] }, 
   SPEED_DEMON: { type: "skill", thresholds: [50, 40, 30], reverse: true },
   STAR_CATCHER: { type: "skill", thresholds: [3, 9, 18] },
   ACCURACY_GOD: { type: "skill", thresholds: [5, 15, 30] },

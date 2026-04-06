@@ -45,7 +45,7 @@ type PreviewCell = "empty" | "valid" | "invalid";
 /* =========================
    Constants
    ========================= */
-const GRID = 10;
+const GRID = 12;
 const WRONG_LIMIT = 3;
 const STORAGE_KEY = "lq:grammar-tetris:logs";
 

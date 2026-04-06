@@ -14,8 +14,10 @@ export const BADGE_META: Record<string, { name: string; desc: string }> = {
   REVIEWER: { name: "愛玩遊戲", desc: "累積遊玩遊戲場次達到門檻" },
   AUDIO_LEARNER: { name: "聽力小耳朵", desc: "點擊單字發音（播放音檔）累積次數" },
   SNAKE_MASTER: { name: "貪吃蛇王", desc: "單字測驗最佳分達到門檻" },
-  TETRIS_ARCH: { name: "方塊建築師", desc: "文法方塊最高成績達到門檻" },
-  SPEED_DEMON: { name: "極速傳說", desc: "挑戰區中「至少 1★」關卡的最快完成時間" },
+TETRIS_ARCH: {
+    name: "方塊建築師",
+    desc: "文法方塊單局最高成績（最高消除行/列數）",
+  },  SPEED_DEMON: { name: "極速傳說", desc: "挑戰區中「至少 1★」關卡的最快完成時間" },
   STAR_CATCHER: { name: "摘星者", desc: "挑戰區累積獲得星星數達到門檻" },
   ACCURACY_GOD: { name: "愛吃的蛇", desc: "貪吃蛇累積「答對的單字數」達到門檻" },
   LEVEL_CRUSHER: { name: "過關斬將", desc: "挑戰區通過的關卡數累積" },
