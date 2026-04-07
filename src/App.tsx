@@ -450,7 +450,7 @@ function AuthGate() {
             L
           </div>
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-700">
-            {mode === "signin" ? "登入 LearningQuest" : "註冊 LearningQuest"}
+            {mode === "signin" ? "登入 A++會考英文總複習" : "註冊 A++會考英文總複習"}
           </h1>
           <p className="text-sm text-neutral-500 mt-2 font-medium">
             {mode === "signin"
@@ -1184,9 +1184,9 @@ function LearningQuestApp() {
                       });
                       const isPerfect = r.correct === r.totalQuestions;
                       // 🔸 這裡自己定義「通關門檻」
-                      const passScore = 7; 
-// 🌟 修正 Bug：直接用分數判定，不管蛇最後是不是撞牆死掉
-const safePassed = r.correct >= passScore;
+                      const passScore = 7;
+                      // 🌟 修正 Bug：直接用分數判定，不管蛇最後是不是撞牆死掉
+                      const safePassed = r.correct >= passScore;
 
                       setModalData({
                         title: r.title || `單字練習：貪吃蛇`,
