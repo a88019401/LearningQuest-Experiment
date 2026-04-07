@@ -1184,11 +1184,9 @@ function LearningQuestApp() {
                       });
                       const isPerfect = r.correct === r.totalQuestions;
                       // 🔸 這裡自己定義「通關門檻」
-                      const passScore = 7; // 跟上面 targetScore 對齊
-                      const safePassed =
-                        typeof r.passed === "boolean"
-                          ? r.passed
-                          : r.correct >= passScore;
+                      const passScore = 7; 
+// 🌟 修正 Bug：直接用分數判定，不管蛇最後是不是撞牆死掉
+const safePassed = r.correct >= passScore;
 
                       setModalData({
                         title: r.title || `單字練習：貪吃蛇`,
