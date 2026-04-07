@@ -42,9 +42,15 @@ export const BADGE_META: Record<string, { name: string; desc: string }> = {
     name: "愛吃的蛇",
     desc: "貪吃蛇「歷史累積正確單字總數」達到門檻",
   },
-  LEVEL_CRUSHER: { name: "過關斬將", desc: "挑戰區通過的關卡數累積（通過＝該關達到 ≥2★ ）" },
+  LEVEL_CRUSHER: {
+    name: "過關斬將",
+    desc: "挑戰區通過的關卡數累積（通過＝該關達到 ≥2★ ）",
+  },
   UNIT_MASTER: { name: "單元制霸", desc: "挑戰區累積獲得 3★ 的關卡數" },
-  PERSISTENT: { name: "越挫越勇", desc: "累積錯誤次數達到（挑戰/遊戲答錯都會累加）" },
+  PERSISTENT: {
+    name: "越挫越勇",
+    desc: "累積錯誤次數達到（挑戰/遊戲答錯都會累加）",
+  },
   NEVER_GIVE_UP: { name: "永不放棄", desc: "按下重新開始/重試的次數累積" },
   TRY_HARD: { name: "勤能補拙", desc: "總嘗試次數累積（遊戲場次 + 重試次數）" },
   COMEBACK_KID: {
@@ -124,7 +130,69 @@ const SRL_BADGE_TEMPLATES = [
     method: "分數比過去最佳提升 ≥3 分的次數",
   },
 ];
+// 🌟 新增 1：每個 SRL 獎章的合理/物理上限值防呆
+const SRL_MAX_LIMITS: Record<string, number> = {
+  VOCAB_DRILLER: 100,
+  AUDIO_LEARNER: 200,
+  SPEED_DEMON: 180,
+  UNIT_MASTER: 60,
+  NEVER_GIVE_UP: 100,
+  COMEBACK_KID: 60,
+};
 
+// 🌟 新增 2：取得對應的單位中文
+const getUnitLabel = (key: string) => {
+  if (key === "SPEED_DEMON") return "秒";
+  if (key === "UNIT_MASTER") return "關";
+  return "次";
+};
+
+// 🌟 新增 3：嚴格且充滿人情味的數值驗證邏輯
+const validateThresholds = (
+  key: string,
+  t: CustomThresholds,
+  historicalBest: number,
+): string | null => {
+  if (!t || t.bronze <= 0 || t.silver <= 0 || t.gold <= 0) {
+    return "⚠️ 嘿！挑戰目標不能是 0 喔，給自己設個小目標吧！🌱";
+  }
+
+  const limit = SRL_MAX_LIMITS[key] || 999;
+
+  if (t.bronze > limit || t.silver > limit || t.gold > limit) {
+    switch (key) {
+      case "VOCAB_DRILLER":
+        return `⚠️ 哇！你太拼了吧！單字看超過 ${limit} 次大腦會當機的！休息一下，設個 ${limit} 以內的數字吧！🧠`;
+      case "AUDIO_LEARNER":
+        return `⚠️ 聽超過 ${limit} 次耳朵會長繭啦👂！每天慢慢聽，設個 ${limit} 以內的數字就好！`;
+      case "SPEED_DEMON":
+        return `⚠️ 喂喂，這可是「極速」傳說耶！目標設定超過 ${limit} 秒 (3分鐘) 就變成散步了啦，跑起來！🏃‍♂️`;
+      case "UNIT_MASTER":
+        return `⚠️ 哎呀！系統總共也才 ${limit} 關可以拿滿星，設定超過 ${limit} 關是不可能任務喔！🎮`;
+      case "NEVER_GIVE_UP":
+        return `⚠️ 雖然永不放棄很帥，但一直重試超過 ${limit} 次會崩潰的！先試試 ${limit} 以內的小目標吧！💪`;
+      case "COMEBACK_KID":
+        return `⚠️ 逆轉勝很不容易的！一關頂多逆轉一兩次，設定 ${limit} 次以內比較有機會達成喔！🔥`;
+      default:
+        return `⚠️ 數字太誇張啦！合理極限是 ${limit} 喔！`;
+    }
+  }
+
+  if (key === "SPEED_DEMON") {
+    if (!(t.bronze > t.silver && t.silver > t.gold)) {
+      return "⚠️ 極速傳說是比「快」的喔！秒數要越來越少，像是：銅 50 > 銀 40 > 金 30 ⏱️";
+    }
+    if (historicalBest > 0 && t.bronze >= historicalBest) {
+      return `⚠️ 你之前已經跑出 ${historicalBest} 秒的好成績囉！銅級目標必須設定得比這個數字更「低（快）」才算挑戰！⚡`;
+    }
+  } else {
+    if (!(t.bronze < t.silver && t.silver < t.gold)) {
+      return "⚠️ 挑戰要像爬樓梯一樣慢慢變難喔！數字要「越來越大」，像是：銅 10 < 銀 20 < 金 30 🪜";
+    }
+  }
+
+  return null;
+};
 function BadgePlanningPanel({
   plans,
   progress,
@@ -179,16 +247,11 @@ function BadgePlanningPanel({
   const historicalBest = currentRow
     ? getBadgeValue(currentRow.key, progress)
     : 0;
-  const isThresholdsValid = (key: string, t: CustomThresholds) => {
-    if (!t || t.bronze <= 0 || t.silver <= 0 || t.gold <= 0) return false;
-    if (key === "SPEED_DEMON") {
-      if (!(t.bronze > t.silver && t.silver > t.gold)) return false;
-      if (historicalBest > 0 && t.bronze >= historicalBest) return false;
-    } else {
-      if (!(t.bronze < t.silver && t.silver < t.gold)) return false;
-    }
-    return true;
-  };
+
+  // 🌟 動態錯誤訊息檢查
+  const errorMsg = currentRow
+    ? validateThresholds(currentRow.key, currentRow.thresholds, historicalBest)
+    : null;
 
   const closeWizard = () => {
     setIsOpen(false);
@@ -198,7 +261,6 @@ function BadgePlanningPanel({
 
   const openWizard = () => {
     if (plans.length >= MAX_PLANS) return;
-    // ✨ 紀錄：學生點開了計畫視窗（展現 SRL 計畫意圖）
     logLSAEvent(user?.id, profile?.full_name, LsaState.SRL_PLAN_OPEN);
     const last = plans[plans.length - 1];
 
@@ -229,8 +291,8 @@ function BadgePlanningPanel({
   const canNext = () => {
     if (step === 0) return !!selectedKey;
     if (!currentRow) return false;
-    if (step === 1)
-      return isThresholdsValid(currentRow.key, currentRow.thresholds);
+    // 🌟 這裡改成看有沒有錯誤訊息
+    if (step === 1) return errorMsg === null;
     if (step === 2) return true;
     if (step === 3) return currentRow.justification.trim().length > 0;
     if (step === 4) return currentRow.name.trim().length > 0;
@@ -523,78 +585,100 @@ function BadgePlanningPanel({
               )}
               {step === 1 && currentRow && (
                 <div className="space-y-4">
-                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-900">
-                    <strong>歷史提示：</strong>
+                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-sm text-indigo-900 leading-relaxed">
+                    <strong>💡 挑戰規則提示：</strong>
+                    <br />
                     {currentRow.key === "SPEED_DEMON"
                       ? historicalBest > 0
-                        ? `你目前的最佳紀錄是 ${historicalBest} 秒，挑戰自己吧！`
-                        : "你還沒玩過挑戰區，先預設一個秒數目標吧！"
-                      : `這個任務會從你按下設定的這一刻「從 0 開始」累積計算喔！`}
+                        ? `你目前的最佳紀錄是 ${historicalBest} 秒。請設定比這個「更少」的秒數目標！`
+                        : "你還沒玩過挑戰區，先預設一個秒數目標吧！(例如：銅 50、銀 40、金 30)"
+                      : `這個任務會從你按下設定的這一刻「從 0 開始」重新累積喔！想挑戰自己接下來能達成多少${getUnitLabel(currentRow.key)}呢？`}
                   </div>
-                  <p className="text-sm font-bold">請輸入你要挑戰的數字：</p>
+
+                  <p className="text-sm font-bold flex justify-between items-end">
+                    <span>請輸入你要挑戰的數字：</span>
+                    {/*<span className="text-xs text-neutral-500 font-normal">
+                      (建議上限：{SRL_MAX_LIMITS[currentRow.key]}{" "}
+                      {getUnitLabel(currentRow.key)})
+                    </span>*/}
+                  </p>
+
                   <div className="grid grid-cols-3 gap-3">
+                    {/* 銅級 */}
                     <div>
                       <label className="block text-xs text-amber-700 font-bold mb-1">
-                        銅級
+                        銅級 ({getUnitLabel(currentRow.key)})
                       </label>
                       <input
                         type="number"
+                        min="1"
+                        step="1"
+                        max={SRL_MAX_LIMITS[currentRow.key]}
                         value={currentRow.thresholds.bronze || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
                           updateRow(currentRow.key, {
                             thresholds: {
                               ...currentRow.thresholds,
-                              bronze: Number(e.target.value),
+                              bronze: isNaN(val) ? 0 : val,
                             },
-                          })
-                        }
-                        className="border p-2 w-full rounded-xl outline-none focus:ring-2 focus:ring-amber-400"
+                          });
+                        }}
+                        className="border p-2 w-full rounded-xl outline-none focus:ring-2 focus:ring-amber-400 font-mono"
                       />
                     </div>
+                    {/* 銀級 */}
                     <div>
                       <label className="block text-xs text-slate-500 font-bold mb-1">
-                        銀級
+                        銀級 ({getUnitLabel(currentRow.key)})
                       </label>
                       <input
                         type="number"
+                        min="1"
+                        step="1"
+                        max={SRL_MAX_LIMITS[currentRow.key]}
                         value={currentRow.thresholds.silver || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
                           updateRow(currentRow.key, {
                             thresholds: {
                               ...currentRow.thresholds,
-                              silver: Number(e.target.value),
+                              silver: isNaN(val) ? 0 : val,
                             },
-                          })
-                        }
-                        className="border p-2 w-full rounded-xl outline-none focus:ring-2 focus:ring-slate-400"
+                          });
+                        }}
+                        className="border p-2 w-full rounded-xl outline-none focus:ring-2 focus:ring-slate-400 font-mono"
                       />
                     </div>
+                    {/* 金級 */}
                     <div>
                       <label className="block text-xs text-yellow-600 font-bold mb-1">
-                        金級
+                        金級 ({getUnitLabel(currentRow.key)})
                       </label>
                       <input
                         type="number"
+                        min="1"
+                        step="1"
+                        max={SRL_MAX_LIMITS[currentRow.key]}
                         value={currentRow.thresholds.gold || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
                           updateRow(currentRow.key, {
                             thresholds: {
                               ...currentRow.thresholds,
-                              gold: Number(e.target.value),
+                              gold: isNaN(val) ? 0 : val,
                             },
-                          })
-                        }
-                        className="border p-2 w-full rounded-xl outline-none focus:ring-2 focus:ring-yellow-400"
+                          });
+                        }}
+                        className="border p-2 w-full rounded-xl outline-none focus:ring-2 focus:ring-yellow-400 font-mono"
                       />
                     </div>
                   </div>
-                  {!isThresholdsValid(
-                    currentRow.key,
-                    currentRow.thresholds,
-                  ) && (
-                    <p className="text-red-500 text-xs font-bold">
-                      ⚠️
-                      數值不合理！(極速傳說秒數須遞減且小於歷史最佳，其他需遞增且大於0)
+
+                  {/* 🌟 顯示專屬錯誤警告 */}
+                  {errorMsg && (
+                    <p className="text-red-500 text-xs font-bold mt-1 bg-red-50 p-2 rounded-lg border border-red-100">
+                      {errorMsg}
                     </p>
                   )}
                 </div>
