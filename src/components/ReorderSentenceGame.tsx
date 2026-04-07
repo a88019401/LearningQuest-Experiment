@@ -201,7 +201,8 @@ const PieceView: React.FC<{ piece: Piece }> = ({ piece }) => {
   return (
     <div
       className="grid auto-rows-max gap-0.5"
-      style={{ gridTemplateColumns: `repeat(${piece.w}, 1.75rem)` }}
+      // 🌟 改用相對方塊大小 (使用 vw 或更小的 rem)
+      style={{ gridTemplateColumns: `repeat(${piece.w}, min(6vw, 1.5rem))` }}
     >
       {Array.from({ length: piece.h }).map((_, r) =>
         Array.from({ length: piece.w }).map((_, c) => {
@@ -210,7 +211,8 @@ const PieceView: React.FC<{ piece: Piece }> = ({ piece }) => {
             <div
               key={r + "-" + c}
               className={
-                "w-7 h-7 rounded-md " +
+                // 🌟 移除 w-7 h-7，改用 aspect-square 讓它自動變成正方形
+                "aspect-square rounded-md " +
                 (on ? "bg-neutral-900" : "bg-neutral-200")
               }
             />
@@ -225,7 +227,7 @@ const DraggablePiece: React.FC<{
   disabled?: boolean;
   selected?: boolean;
   onSelect?: () => void;
-  isGhost?: boolean; // 拖曳浮層用
+  isGhost?: boolean;
 }> = ({ piece, disabled, selected, onSelect, isGhost }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: piece.id, disabled });
@@ -240,7 +242,7 @@ const DraggablePiece: React.FC<{
         "inline-block p-2 rounded-2xl border bg-white shadow-sm select-none " +
         (disabled ? "opacity-40 cursor-not-allowed " : "cursor-grab ") +
         (selected ? "ring-2 ring-neutral-900 " : "") +
-        (isGhost ? "opacity-0 " : isDragging ? "opacity-0 " : "")
+        (isGhost || isDragging ? "opacity-0 " : "")
       }
       aria-roledescription="draggable-piece"
       style={{
@@ -257,7 +259,8 @@ const DraggablePiece: React.FC<{
 
 // 預覽格子
 const PreviewCell: React.FC<{ status: PreviewCell }> = ({ status }) => {
-  let className = "w-7 h-7 rounded-md ";
+  let className =
+    "aspect-square rounded-[4px] sm:rounded-md pointer-events-none ";
   switch (status) {
     case "valid":
       className += "bg-green-500 opacity-70";
@@ -710,8 +713,11 @@ export default function ReorderSentenceGame({
 
               {/* 實際棋盤 */}
               <div
-                className="grid gap-1"
-                style={{ gridTemplateColumns: `repeat(${GRID}, 1.75rem)` }}
+                // 🌟 w-full 讓它吃滿父容器，加上 max-w-md 避免在電腦螢幕上變得無限大
+                className="grid gap-[2px] sm:gap-1 w-full max-w-[280px] sm:max-w-md mx-auto"
+                style={{
+                  gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))`,
+                }} // 🌟 1fr 會平均分配剩下的空間
               >
                 {Array.from({ length: GRID }).map((_, r) =>
                   Array.from({ length: GRID }).map((_, c) => {
@@ -729,10 +735,10 @@ export default function ReorderSentenceGame({
                 )}
               </div>
 
-              {/* 預覽層（紅/綠 ghost） */}
+{/* 預覽層（紅/綠 ghost） */}
               <div
-                className="absolute inset-0 p-3 grid gap-1 pointer-events-none"
-                style={{ gridTemplateColumns: `repeat(${GRID}, 1.75rem)` }}
+                className="absolute inset-0 p-3 grid gap-[2px] sm:gap-1 pointer-events-none w-full max-w-[280px] sm:max-w-md mx-auto"
+                style={{ gridTemplateColumns: `repeat(${GRID}, minmax(0, 1fr))` }}
               >
                 {Array.from({ length: GRID }).map((_, r) =>
                   Array.from({ length: GRID }).map((_, c) => (
