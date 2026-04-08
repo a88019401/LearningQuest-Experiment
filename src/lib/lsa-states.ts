@@ -11,11 +11,15 @@ export const LsaState = {
   CHALLENGE_START: "CHALLENGE_START",
   CHALLENGE_FINISH: "CHALLENGE_FINISH",
   // ✨ SRL 專用行為
-  SRL_PLAN_OPEN: "SRL_PLAN_OPEN",           // 開啟計畫設定視窗
-  SRL_PLAN_SAVE: "SRL_PLAN_SAVE",           // 儲存/更新計畫
+  SRL_PLAN_OPEN: "SRL_PLAN_OPEN", // 開啟計畫設定視窗
+  SRL_PLAN_SAVE: "SRL_PLAN_SAVE", // 儲存/更新計畫
   SRL_REFLECTION_SAVE: "SRL_REFLECTION_SAVE", // 儲存反思內容
-  SRL_PLAN_RETIRE: "SRL_PLAN_RETIRE",       // 放棄計畫
+  SRL_PLAN_RETIRE: "SRL_PLAN_RETIRE", // 放棄計畫
+
+  // ✨ 新增這兩個：專門用來記錄遊戲結算
+  SNAKE_GAME_END: "SNAKE_GAME_END",
+  TETRIS_GAME_END: "TETRIS_GAME_END",
 } as const;
 
 // (可選) 如果其他地方需要把 LsaState 當作型別使用，加上這行：
-export type LsaStateType = typeof LsaState[keyof typeof LsaState];
+export type LsaStateType = (typeof LsaState)[keyof typeof LsaState];

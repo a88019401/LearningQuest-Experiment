@@ -450,7 +450,9 @@ function AuthGate() {
             L
           </div>
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-700">
-            {mode === "signin" ? "登入 A++會考英文總複習" : "註冊 A++會考英文總複習"}
+            {mode === "signin"
+              ? "登入 A++會考英文總複習"
+              : "註冊 A++會考英文總複習"}
           </h1>
           <p className="text-sm text-neutral-500 mt-2 font-medium">
             {mode === "signin"
@@ -677,13 +679,20 @@ function LearningQuestApp() {
   // ✅ 監聽 grammar-tetris-report 事件，交給 progress 判斷是否要頒發 SUPER_GRAMMAR_EXPERT
   useEffect(() => {
     const onReport = (e: Event) => {
-      const { detail } = e as CustomEvent<{
-        roundsPlayed: number;
-        reason: "completed" | "no-fit" | "wrong-limit";
-      }>;
+      const { detail } = e as CustomEvent<any>;
       if (!detail) return;
-      // ✅ 直接交給 progress：達成「completed 且 roundsPlayed ≥ 80」就會頒發 SUPER_GRAMMAR_EXPERT
+
       reportGrammarTetris(detail);
+
+      // ✨ 改用專屬的 TETRIS_GAME_END
+      logLSAEvent(user?.id, profile?.full_name, LsaState.TETRIS_GAME_END, {
+        reason: detail.reason,
+        score: detail.score,
+        wrongCount: detail.wrongCount,
+        roundsPlayed: detail.roundsPlayed,
+        wrongItems: detail.wrongItems, // 記錄排錯的句子
+        correctItems: detail.correctItems, // 記錄排對的句子
+      });
     };
     window.addEventListener(
       "learning-quest:grammar-tetris-report",
@@ -694,7 +703,7 @@ function LearningQuestApp() {
         "learning-quest:grammar-tetris-report",
         onReport as EventListener,
       );
-  }, [reportGrammarTetris]);
+  }, [reportGrammarTetris, user?.id, profile?.full_name]); // 🌟 記得補 dependency
   // 在「學習區 tab」待久一點，算一次 longSessions
   useEffect(() => {
     if (tab === "learn") {
@@ -1207,8 +1216,38 @@ function LearningQuestApp() {
                         perfectRuns: isPerfect ? 1 : 0,
                         snakeCorrectTotal: r.correct, // 🔸 給 ACCURACY_GOD 用
                       });
+
+                      // ✨ 新增這段 SNAKE_GAME_END
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.SNAKE_GAME_END,
+                        {
+                          score: r.correct,
+                          wrong: r.wrong,
+                          timeUsed: r.usedTime,
+                          passed: safePassed,
+                          items: items.map((it) => ({
+                            prompt: it.prompt,
+                            correct: it.correct,
+                            picked:
+                              it.pickedIndex !== null
+                                ? it.choices[it.pickedIndex]
+                                : "未作答",
+                          })),
+                        },
+                      );
                     }}
-                    onRetry={() => reportActivity({ totalRetries: 1 })}
+                    onRetry={() => {
+                      reportActivity({ totalRetries: 1 });
+                      // ✨ 加上 snake retry 紀錄
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.LEARN_SNAKE_GAME,
+                        { action: "retry" },
+                      );
+                    }}
                   />
                 ) : (
                   <VocabQuiz
@@ -1270,7 +1309,16 @@ function LearningQuestApp() {
                         },
                       });
                     }}
-                    onRetry={() => reportActivity({ totalRetries: 1 })}
+                    onRetry={() => {
+                      reportActivity({ totalRetries: 1 });
+                      // ✨ 加上 tetris retry 紀錄
+                      logLSAEvent(
+                        user?.id,
+                        profile?.full_name,
+                        LsaState.LEARN_TETRIS_GAME,
+                        { action: "retry" },
+                      );
+                    }}
                   />
                 ))}
 
