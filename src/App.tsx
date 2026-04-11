@@ -938,7 +938,8 @@ function LearningQuestApp() {
 
       <main className="max-w-5xl mx-auto px-4 pb-10">
         {/* HUD */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 relative z-10">
+        {/* 將 md:grid-cols-3 改為 md:grid-cols-2 讓剩下的兩張卡片平均分配空間 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 relative z-10">
           <Card className="flex flex-col justify-center">
             <div className="text-sm font-medium text-neutral-500 mb-1 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]"></span>{" "}
@@ -961,7 +962,7 @@ function LearningQuestApp() {
               總 XP：{progress.totalXP}
             </div>
           </Card>
-          <Card className="flex flex-col justify-center">
+          {/*<Card className="flex flex-col justify-center">
             <div className="text-sm font-medium text-neutral-500 mb-2 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"></span>{" "}
               快捷
@@ -982,7 +983,7 @@ function LearningQuestApp() {
                 如何擴充？
               </button>
             </div>
-          </Card>
+          </Card>*/}
         </div>
 
         {/* 單元選擇 */}
