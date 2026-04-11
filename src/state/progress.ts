@@ -51,7 +51,7 @@ export const BADGE_QR: Record<string, { type: "participation" | "skill" | "encou
   GAME_LOVER: { type: "participation", thresholds: [3, 6, 10] },
   VOCAB_DRILLER: { type: "participation", thresholds: [3, 10, 30] },
   GRAMMAR_NERD: { type: "participation", thresholds: [3, 10, 30] },
-  XP_COLLECTOR: { type: "participation", thresholds: [100, 500, 2000] },
+  XP_COLLECTOR: { type: "participation", thresholds: [100, 300, 600] }, 
   REVIEWER: { type: "participation", thresholds: [2, 10, 20] },
   AUDIO_LEARNER: { type: "participation", thresholds: [10, 50, 100] },
   SNAKE_MASTER: { type: "skill", thresholds: [5, 10, 25] }, 
