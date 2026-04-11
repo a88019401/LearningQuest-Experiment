@@ -1431,7 +1431,7 @@ function LearningQuestApp() {
       </main>
 
       <footer className="max-w-5xl mx-auto px-4 py-8 text-center text-sm text-neutral-500">
-        © {new Date().getFullYear()} LearningQuest · 可自由調整的模組化原型
+         © {new Date().getFullYear()} 作者Jimmy｜國立中央大學 網路學習科技研究所
       </footer>
 
       {/* 結算 Modal */}
