@@ -628,7 +628,6 @@ function LearningQuestApp() {
     patchUnit,
     reportActivity,
     reportGrammarTetris,
-    reset,
     upsertBadgePlan, // ✅ 新增
     retireBadgePlan, // ✅ 新增
     reflectBadgePlan, // ✅ 新增

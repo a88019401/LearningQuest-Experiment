@@ -6,13 +6,11 @@ import { Card, SectionTitle } from "./ui";
 type Props = {
   points: GrammarPoint[];
   onAcquire?: (index: number) => void;
-  onComplete?: () => void;
 };
 
 export default function GrammarExplain({
   points,
   onAcquire,
-  onComplete,
 }: Props) {
   const [mastered, setMastered] = useState<Set<number>>(new Set());
   const [activeCard, setActiveCard] = useState<number | null>(null);
