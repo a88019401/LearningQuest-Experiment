@@ -876,7 +876,7 @@ function LearningQuestApp() {
               會考英文總複習
             </div>
             <div className="text-sm font-medium text-neutral-500/80">
-              取得獎章、登上排行榜！想辦法全破挑戰區吧！　
+              {profile?.full_name} 同學，取得獎章、登上排行榜！想辦法全破挑戰區吧！　
             </div>
           </div>
         </div>
