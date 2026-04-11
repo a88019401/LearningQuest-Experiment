@@ -9,11 +9,16 @@ type Props = {
   onComplete?: () => void;
 };
 
-export default function GrammarExplain({ points, onAcquire, onComplete }: Props) {
+export default function GrammarExplain({
+  points,
+  onAcquire,
+  onComplete,
+}: Props) {
   const [mastered, setMastered] = useState<Set<number>>(new Set());
   const [activeCard, setActiveCard] = useState<number | null>(null);
 
-  const progress = points.length > 0 ? Math.round((mastered.size / points.length) * 100) : 100;
+  const progress =
+    points.length > 0 ? Math.round((mastered.size / points.length) * 100) : 100;
   const isAllMastered = mastered.size === points.length;
   // 找出第一個尚未掌握的節點（作為「建議挑戰」的節點）
   const firstUnmasteredIndex = points.findIndex((_, i) => !mastered.has(i));
@@ -28,22 +33,28 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
       setActiveCard(null);
     }
   };
-
+  const [isFinished, setIsFinished] = useState(false);
   return (
-    <div className="space-y-6 p-1"> {/* 加一點 padding 避免陰影被切 */}
+    <div className="space-y-6 p-1">
+      {" "}
+      {/* 加一點 padding 避免陰影被切 */}
       {/* 頂部儀表板 */}
       <Card className="border-b-4 border-neutral-200 overflow-hidden relative">
         <div className="flex items-center justify-between mb-2 relative z-10">
           <SectionTitle title="⚡ 文法技能樹 (Skill Tree)" />
           <div className="text-right">
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Sync Rate</span>
-            <div className="text-2xl font-black font-mono text-indigo-600">{progress}%</div>
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+              Sync Rate
+            </span>
+            <div className="text-2xl font-black font-mono text-indigo-600">
+              {progress}%
+            </div>
           </div>
         </div>
-        
+
         {/* 能量條動畫 (改用 CSS inline style 處理動畫，不需改 config) */}
         <div className="relative w-full h-3 bg-neutral-100 rounded-full overflow-hidden shadow-inner mt-2">
-          <div 
+          <div
             className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-700 ease-out"
             style={{ width: `${progress}%` }}
           />
@@ -54,15 +65,14 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
               100% { transform: translateX(100%); }
             }
           `}</style>
-          <div 
+          <div
             className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
-            style={{ 
-              animation: 'shimmer-move 2s infinite linear' // 直接在這裡寫動畫
-            }} 
+            style={{
+              animation: "shimmer-move 2s infinite linear", // 直接在這裡寫動畫
+            }}
           />
         </div>
       </Card>
-
       {/* 卡片網格區：加入 items-start 防止拉伸 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start relative z-10">
         {points.map((g, i) => {
@@ -81,12 +91,12 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
                   isMastered
                     ? "border-emerald-400 bg-emerald-50/50 shadow-sm scale-[0.98] opacity-70 hover:opacity-100" // 已掌握
                     : isActive
-                    ? "border-indigo-500 bg-white shadow-[0_0_20px_rgba(99,102,241,0.3)] scale-[1.02] z-20" // 展開中
-                    : isNextTarget
-                    ? "border-yellow-400 bg-white shadow-[0_0_15px_rgba(250,204,21,0.5)] z-10" // 下一個建議挑戰
-                    : isLocked
-                    ? "border-neutral-200 bg-neutral-50/50 opacity-60 hover:opacity-100" // 尚未輪到的關卡
-                    : "border-neutral-200 bg-white hover:border-indigo-300 hover:shadow-md z-0"
+                      ? "border-indigo-500 bg-white shadow-[0_0_20px_rgba(99,102,241,0.3)] scale-[1.02] z-20" // 展開中
+                      : isNextTarget
+                        ? "border-yellow-400 bg-white shadow-[0_0_15px_rgba(250,204,21,0.5)] z-10" // 下一個建議挑戰
+                        : isLocked
+                          ? "border-neutral-200 bg-neutral-50/50 opacity-60 hover:opacity-100" // 尚未輪到的關卡
+                          : "border-neutral-200 bg-white hover:border-indigo-300 hover:shadow-md z-0"
                 }
               `}
             >
@@ -102,7 +112,7 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
               )}
               {/* 卡片標題區 */}
               <div className="p-4 flex items-start gap-3">
-                <div 
+                <div
                   className={`
                     w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 transition-colors
                     ${isMastered ? "bg-emerald-500 text-white" : "bg-neutral-100 text-neutral-500 group-hover:bg-indigo-100 group-hover:text-indigo-600"}
@@ -112,17 +122,23 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
                 </div>
 
                 <div className="flex-1">
-                  <h3 className={`font-bold text-lg leading-tight ${isMastered ? "text-emerald-800 line-through opacity-70" : "text-neutral-800"}`}>
+                  <h3
+                    className={`font-bold text-lg leading-tight ${isMastered ? "text-emerald-800 line-through opacity-70" : "text-neutral-800"}`}
+                  >
                     {g.point}
                   </h3>
                   <p className="text-xs text-neutral-500 mt-1 font-mono">
-                    {isMastered ? "STATUS: COMPLETED" : isActive ? "STATUS: LEARNING..." : "CLICK TO UNLOCK"}
+                    {isMastered
+                      ? "STATUS: COMPLETED"
+                      : isActive
+                        ? "STATUS: LEARNING..."
+                        : "CLICK TO UNLOCK"}
                   </p>
                 </div>
               </div>
 
               {/* 展開內容區 */}
-              <div 
+              <div
                 className={`
                   transition-all duration-500 ease-in-out bg-neutral-50/50
                   ${isActive ? "max-h-[800px] opacity-100 border-t border-indigo-100" : "max-h-0 opacity-0"}
@@ -130,40 +146,50 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
               >
                 <div className="p-5 space-y-4">
                   <div className="text-neutral-700 leading-relaxed bg-white p-3 rounded-lg border border-neutral-100 shadow-sm">
-                    <span className="text-indigo-500 font-bold text-lg mr-2">💡</span>
+                    <span className="text-indigo-500 font-bold text-lg mr-2">
+                      💡
+                    </span>
                     {g.desc}
                   </div>
 
                   {/* 例句區 (含翻譯功能) */}
                   <div className="bg-slate-800 rounded-xl p-4 text-slate-200 font-mono text-sm relative overflow-visible shadow-inner">
-                    <div className="absolute top-0 right-0 px-2 py-1 bg-slate-700 rounded-bl-lg text-xs text-slate-400 select-none">EXAMPLES</div>
+                    <div className="absolute top-0 right-0 px-2 py-1 bg-slate-700 rounded-bl-lg text-xs text-slate-400 select-none">
+                      EXAMPLES
+                    </div>
                     <ul className="space-y-3 mt-2">
                       {g.examples.map((ex, j) => {
                         // 判斷是純字串還是物件
                         const text = typeof ex === "string" ? ex : ex.en;
-                        const translation = typeof ex === "string" ? null : ex.zh;
+                        const translation =
+                          typeof ex === "string" ? null : ex.zh;
 
                         return (
-                          <li 
-                            key={j} 
+                          <li
+                            key={j}
                             className={`
                               relative flex items-start gap-2 group/ex
                               ${translation ? "cursor-help" : ""}
                             `}
                           >
-                            <span className="text-pink-400 select-none mt-0.5">❯</span>
-                            
+                            <span className="text-pink-400 select-none mt-0.5">
+                              ❯
+                            </span>
+
                             {/* 英文句子 (有翻譯的話底部加虛線提示) */}
-                            <span className={`
+                            <span
+                              className={`
                               transition-colors duration-200
                               ${translation ? "border-b border-dashed border-slate-600 group-hover/ex:border-pink-400 group-hover/ex:text-white" : ""}
-                            `}>
+                            `}
+                            >
                               {text}
                             </span>
 
                             {/* 懸浮翻譯氣泡 (Tooltip) */}
                             {translation && (
-                              <div className="
+                              <div
+                                className="
                                 absolute left-0 bottom-full mb-2 z-50
                                 w-max max-w-[280px] px-3 py-2
                                 bg-gradient-to-r from-pink-600 to-rose-500
@@ -171,7 +197,8 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
                                 opacity-0 translate-y-2 scale-95 pointer-events-none
                                 group-hover/ex:opacity-100 group-hover/ex:translate-y-0 group-hover/ex:scale-100
                                 transition-all duration-300 ease-out
-                              ">
+                              "
+                              >
                                 {translation}
                                 {/* 小三角形指標 */}
                                 <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-pink-600"></div>
@@ -206,21 +233,30 @@ export default function GrammarExplain({ points, onAcquire, onComplete }: Props)
           );
         })}
       </div>
-
-      <div className="mt-8 flex justify-center pb-8"> {/* pb-8 增加底部空間 */}
+      <div className="mt-8 flex justify-center pb-8">
         <button
-          onClick={onComplete}
           disabled={!isAllMastered}
+          onClick={() => {
+            setIsFinished(true); // 觸發成功特效
+            // 注意這裡：我們不呼叫 onComplete() 了，所以不會有 XP！
+            setTimeout(() => setIsFinished(false), 3000); // 3秒後恢復原狀
+          }}
           className={`
-            relative px-8 py-4 rounded-full font-black text-lg tracking-widest transition-all duration-500
+            relative px-8 py-4 rounded-full font-black text-lg tracking-widest transition-all duration-300
             ${
-              isAllMastered
-                ? "bg-neutral-900 text-white shadow-2xl hover:scale-105 hover:shadow-indigo-500/30 cursor-pointer"
-                : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+              isFinished
+                ? "bg-emerald-500 text-white shadow-xl animate-bounce scale-110" // 彈跳與綠色特效
+                : isAllMastered
+                  ? "bg-neutral-900 text-white shadow-2xl hover:scale-105 hover:shadow-indigo-500/30 cursor-pointer"
+                  : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
             }
           `}
         >
-          {isAllMastered ? "🏆 領取最終獎勵" : `尚有 ${points.length - mastered.size} 個技能未解鎖`}
+          {isFinished
+            ? "🎉 恭喜完成文法特訓！"
+            : isAllMastered
+              ? "🏆 完成單元"
+              : `尚有 ${points.length - mastered.size} 個技能未解鎖`}
         </button>
       </div>
     </div>

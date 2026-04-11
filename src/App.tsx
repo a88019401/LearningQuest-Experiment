@@ -1291,9 +1291,9 @@ function LearningQuestApp() {
                       addXP(unit.id, 10); // ✨ 每學一個觀念給 10 XP
                     }}
                     // 2. onComplete: 全部學完後，給一個大獎勵 (不加次數，只給分)
-                    onComplete={() => {
-                      addXP(unit.id, 50); // ✨ 全部完成給 50 XP
-                    }}
+                    //onComplete={() => {
+                      //addXP(unit.id, 50); // ✨ 全部完成給 50 XP
+                    //}}
                   />
                 ) : (
                   <ReorderSentenceGame
