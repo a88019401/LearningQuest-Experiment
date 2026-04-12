@@ -386,7 +386,7 @@ function BadgePlanningPanel({
           </span>
           {plan.retired && (
             <span className="ml-1 text-[11px] font-semibold bg-red-100 text-red-800 px-2 py-1 rounded-full">
-              已退休
+              已停用
             </span>
           )}
           {!plan.retired && tier > 0 && (
@@ -414,7 +414,7 @@ function BadgePlanningPanel({
             disabled={!canRetire}
             className={`px-3 py-1 rounded-full text-xs font-semibold border ${canRetire ? "border-black bg-white text-black hover:bg-neutral-50" : "opacity-30 cursor-not-allowed"}`}
           >
-            退休
+            停用
           </button>
         </div>
 
@@ -456,7 +456,7 @@ function BadgePlanningPanel({
           {plan.retired && (
             <div className="mt-2 pt-2 border-t border-black/10">
               <div>
-                <span className="font-semibold text-red-700">退休原因：</span>
+                <span className="font-semibold text-red-700">停用原因：</span>
                 {plan.retireReason}
               </div>
               {plan.retireNote && (
@@ -543,7 +543,7 @@ function BadgePlanningPanel({
               {step === 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   {rows.map((r) => {
-                    // 🌟 防呆：只要該任務有「進行中(未退休)」的，就不准選！
+                    // 🌟 防呆：只要該任務有「進行中(未停用)」的，就不准選！
                     const activePlan = plans.find(
                       (p) => p.key === r.key && !p.retired,
                     );
@@ -763,7 +763,7 @@ function BadgePlanningPanel({
         </div>
       )}
 
-      {/* 🌟 退休 Modal */}
+      {/* 🌟 停用 Modal */}
       {retireOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="relative bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
@@ -788,10 +788,10 @@ function BadgePlanningPanel({
               </svg>
             </button>
             <h3 className="font-bold text-lg mb-1 text-red-700">
-              退休這枚獎章
+              停用這枚獎章
             </h3>
             <p className="text-sm text-neutral-600 mb-4">
-              誠實面對自己也是一種學習，請記錄下退休的原因供後續研究分析。
+              誠實面對自己也是一種學習，請記錄下停用的原因供後續研究分析。
             </p>
             <select
               value={retireReason}
@@ -833,7 +833,7 @@ function BadgePlanningPanel({
                   // ✨ 先找出這筆計畫的資訊
                   const targetPlan = plans.find((p) => p.id === retireId);
                   retireBadgePlan(retireId, retireReason, retireNote);
-                  // ✨ 紀錄退休原因
+                  // ✨ 紀錄停用原因
                   // ✨ 紀錄：補上 badgeKey 資訊
                   logLSAEvent(
                     user?.id,
@@ -851,7 +851,7 @@ function BadgePlanningPanel({
                 }}
                 className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold shadow-md disabled:opacity-30 hover:bg-red-700 transition"
               >
-                確定退休
+                確定停用
               </button>
             </div>
           </div>
