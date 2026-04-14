@@ -244,6 +244,43 @@ function BadgePlanningPanel({
   const safeTierOf = (key: string): BadgeTier =>
     (progress.badges?.[key]?.tier as BadgeTier) || 0;
 
+  //2026/4/14改動
+  const getPlanTier = (plan: BadgePlanConfig): BadgeTier => {
+    // 退休卡：只看「退休前」已達成到哪一級，不再吃後續 progress
+    if (plan.retired) {
+      const unlocked = progress.badges?.[plan.key]?.unlockedAtByTier ?? {};
+      const retiredAt = new Date(plan.updatedAt).getTime();
+
+      const reached = (tier: 1 | 2 | 3) => {
+        const ts = unlocked[tier];
+        return !!ts && new Date(ts).getTime() <= retiredAt;
+      };
+
+      if (reached(3)) return 3;
+      if (reached(2)) return 2;
+      if (reached(1)) return 1;
+      return 0;
+    }
+
+    // 進行中卡片：才用 live progress 算
+    const effectiveVal = getEffectiveProgress(plan.key, progress, plan);
+    const { bronze, silver, gold } = plan.thresholds;
+    const isReverse = !!BADGE_QR[plan.key]?.reverse;
+
+    if (isReverse) {
+      if (effectiveVal > 0 && effectiveVal <= gold) return 3;
+      if (effectiveVal > 0 && effectiveVal <= silver) return 2;
+      if (effectiveVal > 0 && effectiveVal <= bronze) return 1;
+      return 0;
+    }
+
+    if (effectiveVal >= gold) return 3;
+    if (effectiveVal >= silver) return 2;
+    if (effectiveVal >= bronze) return 1;
+    return 0;
+  };
+  //2024/4/14改動結束
+
   const historicalBest = currentRow
     ? getBadgeValue(currentRow.key, progress)
     : 0;
@@ -263,20 +300,16 @@ function BadgePlanningPanel({
     if (plans.length >= MAX_PLANS) return;
     logLSAEvent(user?.id, profile?.full_name, LsaState.SRL_PLAN_OPEN);
     const last = plans[plans.length - 1];
-
-    if (last && !last.retired && safeTierOf(last.key) === 0) {
+    //2026/4/14改動
+    const lastTier = last ? getPlanTier(last) : 0;
+    if (last && !last.retired && lastTier === 0) {
       setRetireId(last.id);
       setRetireReason("");
       setRetireNote("");
       setRetireOpen(true);
       return;
     }
-    if (
-      last &&
-      !last.retired &&
-      safeTierOf(last.key) >= 1 &&
-      !last.passReflectReason
-    ) {
+    if (last && !last.retired && lastTier >= 1 && !last.passReflectReason) {
       setPassId(last.id);
       setPassReason("");
       setPassNote("");
@@ -335,43 +368,48 @@ function BadgePlanningPanel({
   const renderPlannedBadgeCard = (plan: BadgePlanConfig, index: number) => {
     const id = plan.id;
     const key = plan.key;
-    const tier = safeTierOf(key);
+    const tier = getPlanTier(plan);
     const style = TIER_STYLES[tier];
     const icon = TIER_ICONS[tier];
 
     // 🌟 傳入 plan 以確保計算的是「這張卡片」的專屬進度
-    const effectiveVal = getEffectiveProgress(key, progress, plan);
-    const isReverse = key === "SPEED_DEMON";
+
+const effectiveVal = plan.retired
+  ? null
+  : getEffectiveProgress(key, progress, plan);
+
+const effectiveNum = effectiveVal ?? 0;
+    const isReverse = !!BADGE_QR[key]?.reverse;
 
     const { bronze, silver, gold } = plan.thresholds;
     let nextTarget =
       tier === 0 ? bronze : tier === 1 ? silver : tier === 2 ? gold : 0;
     let nextTierLabel =
       tier === 0 ? "銅級" : tier === 1 ? "銀級" : tier === 2 ? "金級" : "";
+let diffText = "";
+if (plan.retired) diffText = "已停用，不再追蹤";
+else if (tier === 3) diffText = "已達最高等級！";
+else if (!isReverse) {
+  const remain = Math.max(0, nextTarget - effectiveNum);
+  diffText =
+    remain === 0 ? `已達 ${nextTierLabel} 門檻` : `還差 ${remain} 次升級`;
+} else {
+  if (effectiveNum === 0) diffText = "設定後尚未有新紀錄";
+  else if (effectiveNum <= nextTarget)
+    diffText = `已達 ${nextTierLabel} 門檻`;
+  else
+    diffText = `再快 ${Math.round(effectiveNum - nextTarget)} 秒升級`;
+}
 
-    let diffText = "";
-    if (tier === 3) diffText = "已達最高等級！";
-    else if (!isReverse) {
-      const remain = Math.max(0, nextTarget - effectiveVal);
-      diffText =
-        remain === 0 ? `已達 ${nextTierLabel} 門檻` : `還差 ${remain} 次升級`;
-    } else {
-      if (effectiveVal === 0) diffText = "設定後尚未有新紀錄";
-      else if (effectiveVal <= nextTarget)
-        diffText = `已達 ${nextTierLabel} 門檻`;
-      else diffText = `再快 ${Math.round(effectiveVal - nextTarget)} 秒升級`;
-    }
-
-    let ratio = 0;
-    if (!isReverse) ratio = gold > 0 ? Math.min(effectiveVal / gold, 1) : 0;
-    else
-      ratio =
-        effectiveVal > 0
-          ? effectiveVal <= gold
-            ? 1
-            : Math.min(bronze / effectiveVal, 1)
-          : 0;
-
+let ratio = 0;
+if (!isReverse) ratio = gold > 0 ? Math.min(effectiveNum / gold, 1) : 0;
+else
+  ratio =
+    effectiveNum > 0
+      ? effectiveNum <= gold
+        ? 1
+        : Math.min(bronze / effectiveNum, 1)
+      : 0;
     const canRetire = !plan.retired && tier === 0;
     const needsReflect = !plan.retired && tier >= 1 && !plan.passReflectReason;
 
@@ -475,8 +513,9 @@ function BadgePlanningPanel({
           </div>
           <div className="mt-2 text-sm font-semibold">{diffText}</div>
           <div className="mt-1 text-xs text-neutral-700 font-mono font-bold text-indigo-800">
-            有效挑戰進度：{effectiveVal > 0 ? effectiveVal : "0"}{" "}
-            {isReverse ? "秒" : "次"}
+            {plan.retired
+              ? "已停止追蹤"
+              : `有效挑戰進度：${(effectiveVal ?? 0) > 0 ? effectiveVal : 0} ${isReverse ? "秒" : "次"}`}
           </div>
         </div>
       </div>
@@ -548,8 +587,12 @@ function BadgePlanningPanel({
                       (p) => p.key === r.key && !p.retired,
                     );
                     const isDisabled = !!activePlan;
+                    const activePlanTier = activePlan
+                      ? getPlanTier(activePlan)
+                      : 0;
+
                     const statusText = isDisabled
-                      ? safeTierOf(r.key) > 0
+                      ? activePlanTier > 0
                         ? "已通關"
                         : "進行中"
                       : "";
