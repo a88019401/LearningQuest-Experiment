@@ -241,8 +241,8 @@ function BadgePlanningPanel({
     [rows, selectedKey],
   );
 
-  const safeTierOf = (key: string): BadgeTier =>
-    (progress.badges?.[key]?.tier as BadgeTier) || 0;
+  {/*const safeTierOf = (key: string): BadgeTier =>
+    (progress.badges?.[key]?.tier as BadgeTier) || 0;*/}
 
   //2026/4/14改動
   const getPlanTier = (plan: BadgePlanConfig): BadgeTier => {
