@@ -1078,3 +1078,15 @@ unique(user_id, game)
 4. 不在前端放 service role key。
 5. 不把真實學生姓名與 UUID 放進公開 GitHub、論文附件或交接範例。
 6. 所有重要修改都要有 Git commit、日期與原因。
+
+
+## License
+
+LearningQuest may be used, modified, and redistributed for educational,
+academic, and non-commercial research purposes with proper attribution.
+
+Commercial use is prohibited without prior written permission.
+
+Copyright © 2026 Chang Yu-Hao (張祐豪).
+
+See [LICENSE](./LICENSE) for details.
